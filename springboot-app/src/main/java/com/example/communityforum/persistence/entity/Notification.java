@@ -26,7 +26,8 @@ public class Notification {
     private Long senderId;
 
     // Type of notification (e.g., COMMENT, LIKE, FOLLOW)
-    @Column(nullable = false)
+    // MySQL "type" is a reserved word -> backticks quote the column name
+    @Column(name = "`type`", nullable = false)
     private String type;
 
     // Message content shown to receiver
@@ -34,7 +35,8 @@ public class Notification {
     private String message;
 
     // Whether the receiver has read the notification
-    @Column(nullable = false)
+    // MySQL "read" is a reserved word -> backticks quote the column name
+    @Column(name = "`read`", nullable = false)
     private boolean read;
 
     // Automatically set when the notification is created

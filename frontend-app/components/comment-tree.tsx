@@ -1,7 +1,7 @@
 "use client"
 
 import { CommentCard } from "./comment-card"
-import type { Comment } from "@/lib/types"
+import { MAX_COMMENT_DEPTH, type Comment } from "@/lib/types"
 
 type CommentTreeProps = {
   comments: Comment[]
@@ -20,6 +20,11 @@ export function CommentTree({
   canModerate,
   onMarkSolution,
 }: CommentTreeProps) {
+  // Backend allows replies up to MAX_COMMENT_DEPTH levels (root = 1).
+  // Reply button is hidden when this comment is already at the deepest level:
+  // canReply = depth (0-based) < MAX_COMMENT_DEPTH - 1
+  const canReply = depth < MAX_COMMENT_DEPTH - 1
+
   return (
     <div className="space-y-4">
       {comments.map((comment) => (
@@ -29,6 +34,7 @@ export function CommentTree({
             depth={depth}
             postId={postId}
             canModerate={canModerate}
+            canReply={canReply}
             isBest={bestCommentId === comment.id || comment.best === true}
             onMarkSolution={onMarkSolution}
           />

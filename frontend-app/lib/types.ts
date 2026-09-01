@@ -102,7 +102,9 @@ export interface PaginatedResponse<T> {
   empty: boolean;
 }
 
-export type Comment {
+export const MAX_COMMENT_DEPTH = 3;
+
+export type Comment = {
   id: number;
   content: string;
   authorUsername: string;

@@ -1,0 +1,15 @@
+# Dev overlay for backend: runs the pre-built jar mounted from the host.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend
+#
+# After editing backend code, run scripts/dev-backend.sh (or recompile + this command).
+# No image rebuild needed - the jar is volume-mounted.
+
+services:
+  backend:
+    image: eclipse-temurin:17-jre
+    build: !reset null
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ./springboot-app/target/CommunityForum-0.0.1-SNAPSHOT.jar:/app/app.jar:ro
+      - uploads:/app/uploads

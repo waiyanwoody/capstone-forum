@@ -40,6 +40,7 @@ type CommentCardProps = {
   depth?: number
   postId: number
   canModerate: boolean
+  canReply?: boolean
   isBest?: boolean
   onMarkSolution?: (commentId: number) => void
 }
@@ -49,6 +50,7 @@ export function CommentCard({
   depth = 0,
   postId,
   canModerate,
+  canReply = true,
   isBest = false,
   onMarkSolution,
 }: CommentCardProps) {
@@ -310,20 +312,24 @@ export function CommentCard({
             <span className="text-xs">{likeCount > 0 ? likeCount : "Like"}</span>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 h-8"
-            onClick={() =>
-              setShowReply(!showReply)
-            }
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
+          {canReply ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-8"
+              onClick={() => setShowReply(!showReply)}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
 
-            <span className="text-xs">
-              Reply
+              <span className="text-xs">
+                Reply
+              </span>
+            </Button>
+          ) : (
+            <span className="text-xs text-muted-foreground italic">
+              Max reply depth reached
             </span>
-          </Button>
+          )}
 
         </div>
       )}

@@ -6,6 +6,7 @@ import com.github.javafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         // ✅ Step 1: Ensure admin exists
         if (userRepository.findByUsername("admin").isEmpty()) {
@@ -76,6 +78,16 @@ public class DataSeeder implements CommandLineRunner {
                     }).collect(Collectors.toList());
             userRepository.saveAll(users);
 
+            // --- Tags (Post <-> Tag many-to-many via post_tags join table) ---
+            List<String> tagNames = List.of(
+                    "java", "spring-boot", "spring-security", "jpa", "mysql",
+                    "react", "nextjs", "javascript", "typescript", "tailwindcss",
+                    "websocket", "authentication", "docker", "devops", "testing",
+                    "algorithms", "database", "ui-ux", "performance", "help-wanted"
+            );
+            List<Tag> tags = tagNames.stream().map(Tag::new).collect(Collectors.toList());
+            tagRepository.saveAll(tags);
+
             // --- Posts ---
             List<Post> posts = IntStream.range(0, 50)
                     .mapToObj(i -> {
@@ -94,8 +106,12 @@ public class DataSeeder implements CommandLineRunner {
 
                         p.setUser(users.get(faker.number().numberBetween(0, users.size())));
 
-                        // --- Tags ---
-                        // no tags for now
+                        // --- Tags: attach 1-3 random tags (backend schema: Set<Tag>, post_tags join) ---
+                        int tagCount = faker.number().numberBetween(1, 4);
+                        Set<Tag> postTags = IntStream.range(0, tagCount)
+                                .mapToObj(idx -> tags.get(faker.number().numberBetween(0, tags.size())))
+                                .collect(Collectors.toSet());
+                        p.setTags(postTags);
 
                         return p;
                     })

@@ -12,11 +12,11 @@ export type FilterTab = "all" | "trending" | "solved" | "following";
 export const useFetchPosts = (pageSize = 10, filter: FilterTab = "all") => {
   const query = useInfiniteQuery<PaginatedResponse<Post>, ApiHttpError>({
     queryKey: ["posts", pageSize, filter],
-    queryFn: ({ page = 0 }) => {
+    queryFn: ({ pageParam = 0 }) => {
       if (filter === "solved") {
-        return getPosts(page, pageSize, { solved: true });
+        return getPosts(pageParam, pageSize, { solved: true });
       }
-      return getPosts(page, pageSize);
+      return getPosts(pageParam, pageSize);
     },
     getNextPageParam: (lastPage) => {
       // Return next page number, or undefined if no more pages

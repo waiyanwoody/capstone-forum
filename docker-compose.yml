@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-Milomilo112}
+      MYSQL_DATABASE: community_forum
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-Milomilo112}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./springboot-app
+    env_file:
+      - ./springboot-app/.env
+    environment:
+      DB_URL: jdbc:mysql://db:3306/community_forum
+      SPRING_RABBITMQ_HOST: localhost
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend-app
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
+  uploads:

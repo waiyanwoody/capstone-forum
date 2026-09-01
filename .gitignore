@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Local Spring configs
+application-local.properties
+application-*.local.properties
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.sts4-cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Verceil / misc
+.vercel

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title th:text="'Verify your email - ' + ${appName}">Verify your email</title>
+    <style>
+        body {
+            margin: 0;
+            background: #f7f8fc;
+            font-family: Inter, Arial, sans-serif;
+            color: #0b1324;
+        }
+
+        .wrap {
+            padding: 24px;
+        }
+
+        .card {
+            max-width: 640px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e6e8ef;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .hdr {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e6e8ef;
+            font-weight: 700;
+            font-size: 16px;
+            color: #1a1f36;
+            background-color: #f9fafb;
+        }
+
+        .bd {
+            padding: 22px 20px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 12px;
+            background: #3e7ef2;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #336fdd;
+        }
+
+        .muted {
+            color: #667085;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="hdr" th:text="${appName}">Community Forum</div>
+        <div class="bd">
+            <p>Hi <strong th:text="${username}">there</strong>,</p>
+            <p>Please verify your email to finish setting up your account.</p>
+            <p>
+                <a class="btn" th:href="${verifyLink}">Verify email</a>
+            </p>
+            <p class="muted">
+                This link expires in <span th:text="${expireHours}">24</span> hours.
+                If you didn’t create an account, you can ignore this email.
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

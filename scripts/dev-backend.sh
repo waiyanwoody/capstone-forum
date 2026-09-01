@@ -1,33 +1,21 @@
 #!/usr/bin/env bash
-# Dev loop for the Spring Boot backend: compile + run (no image rebuild).
+# Backend dev with AUTO-RELOAD (Spring Boot DevTools).
+# The dev container mounts the backend source and ~/.m2; a watcher recompiles on
+# save and DevTools restarts the app. No image rebuild, no manual compile step.
 #
-#   1. Compiles the jar using a throwaway Maven container.
-#      ~/.m2 is mounted so dependencies are cached between runs (fast after the first).
-#   2. Starts the backend using docker-compose.dev.yml (jar is volume-mounted).
-#
-# Usage:  scripts/dev-backend.sh            # compile + start + follow logs
-#         scripts/dev-backend.sh restart    # just restart with the latest jar
+#   scripts/dev-backend.sh            # start + follow logs (default)
+#   scripts/dev-backend.sh logs       # follow logs only
+#   scripts/dev-backend.sh restart    # restart the dev container
+#   scripts/dev-backend.sh stop       # stop the dev container
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-ROOT="$(pwd)"
-SPRING_DIR="$ROOT/springboot-app"
+COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.dev.yml)
 
-if [ "${1:-}" = "restart" ]; then
-  docker compose -f docker-compose.yml -f docker-compose.dev.yml restart backend
-  exit 0
-fi
-
-echo "==> Compiling Spring Boot app (maven in docker)..."
-docker run --rm \
-  -v "$SPRING_DIR":/build \
-  -w /build \
-  -v "${HOME}/.m2:/root/.m2" \
-  maven:3.9-eclipse-temurin-17 \
-  mvn -q package -DskipTests
-
-echo "==> Starting backend (mounted jar, no image rebuild)..."
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend
-
-echo "==> Backend running. Following logs (Ctrl+C to stop, app keeps running)..."
-docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f -t backend
+case "${1:-}" in
+  logs)     "${COMPOSE[@]}" logs -f -t backend ;;
+  restart)  "${COMPOSE[@]}" restart backend ;;
+  stop)     "${COMPOSE[@]}" stop backend ;;
+  "")       "${COMPOSE[@]}" up -d backend && "${COMPOSE[@]}" logs -f -t backend ;;
+  *)        echo "usage: $0 [logs|restart|stop]"; exit 1 ;;
+esac

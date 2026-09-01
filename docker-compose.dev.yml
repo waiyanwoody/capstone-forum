@@ -1,15 +1,23 @@
-# Dev overlay for backend: runs the pre-built jar mounted from the host.
+# Dev overlay for the backend: AUTO-RELOAD via Spring Boot DevTools.
+# Runs `mvn spring-boot:run` inside a Maven image (source + ~/.m2 mounted); a
+# watcher script recompiles on save and DevTools restarts the app automatically.
+# No image rebuild needed.
+#
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend
-#
-# After editing backend code, run scripts/dev-backend.sh (or recompile + this command).
-# No image rebuild needed - the jar is volume-mounted.
+#   scripts/dev-backend.sh          # <- recommended wrapper
 
 services:
   backend:
-    image: eclipse-temurin:17-jre
+    image: maven:3.9-eclipse-temurin-17
     build: !reset null
-    command: ["java", "-jar", "/app/app.jar"]
-    volumes:
-      - ./springboot-app/target/CommunityForum-0.0.1-SNAPSHOT.jar:/app/app.jar:ro
-      - uploads:/app/uploads
+    command: ["bash", "/root/backend-watcher.sh"]
+    environment:
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: "2000"
+      SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: "1500"
+    volumes: !override
+      - ./springboot-app:/build
+      - ~/.m2:/root/.m2
+      - ./scripts/backend-watcher.sh:/root/backend-watcher.sh:ro
+      - uploads:/build/uploads

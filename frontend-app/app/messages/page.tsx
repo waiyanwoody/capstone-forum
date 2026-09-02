@@ -16,7 +16,7 @@ import { api } from "@/lib/api/client";
 
 export default function MessagesPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { connected, sessions, sendToPeer, hydrateSession, markPeerRead, clearActivePeer } = useChatStore();
+  const { connected, sessions, sendToPeer, hydrateSession, markPeerRead, clearActivePeer, sendTyping, isTypingFor } = useChatStore();
   const { isOnline } = usePresence();
   const [friends, setFriends] = useState<UserResponse[]>([]);
   const [selected, setSelected] = useState<UserResponse | null>(null);
@@ -224,6 +224,16 @@ export default function MessagesPage() {
                       )}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">@{selected.username}</p>
+                    {isTypingFor(selected.username) && (
+                      <p className="flex items-center gap-1 truncate text-xs font-medium text-primary">
+                        <span className="flex gap-0.5">
+                          <span className="h-1 w-1 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                          <span className="h-1 w-1 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                          <span className="h-1 w-1 animate-bounce rounded-full bg-primary" />
+                        </span>
+                        {selected.fullname} is typing...
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -247,7 +257,10 @@ export default function MessagesPage() {
                   <input
                     ref={inputRef}
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (selected) sendTyping(selected.username);
+                    }}
                     placeholder={`Message ${selected.fullname}...`}
                     maxLength={1000}
                     className="h-10 flex-1 rounded-full border border-border bg-muted px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"

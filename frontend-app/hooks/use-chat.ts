@@ -28,6 +28,8 @@ let connected = false;
 let sessions: Record<string, ChatMessage[]> = {};
 let unreadByPeer: Record<string, number> = {};
 let activePeer: string | null = null;
+let typingByPeer: Record<string, boolean> = {};
+const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let client: Client | null = null;
 
 const listeners = new Set<() => void>();
@@ -44,6 +46,33 @@ function appendToSession(peer: string, msg: ChatMessage) {
   sessions = { ...sessions, [peer]: [...list, msg].slice(-200) };
 }
 
+const TYPING_HIDE_MS = 3000;
+const TYPING_THROTTLE_MS = 1500;
+const lastTypingSent = new Map<string, number>();
+
+function isTypingFor(peer: string): boolean {
+  return !!typingByPeer[peer];
+}
+
+function receiveTyping(peer: string) {
+  if (!typingByPeer[peer]) {
+    typingByPeer = { ...typingByPeer, [peer]: true };
+    publish();
+  }
+  const existing = typingTimers.get(peer);
+  if (existing) clearTimeout(existing);
+  typingTimers.set(
+    peer,
+    setTimeout(() => {
+      if (typingByPeer[peer]) {
+        typingByPeer = { ...typingByPeer, [peer]: false };
+        publish();
+      }
+      typingTimers.delete(peer);
+    }, TYPING_HIDE_MS),
+  );
+}
+
 let latestUsername: string | null = null;
 function findCurrentUsername(): string | null {
   return latestUsername;
@@ -51,10 +80,10 @@ function findCurrentUsername(): string | null {
 
 export function useChatStore() {
   const { user, isAuthenticated } = useAuth();
-  const [snapshot, setSnapshot] = useState({ connected, sessions, unreadByPeer });
+  const [snapshot, setSnapshot] = useState({ connected, sessions, unreadByPeer, typingByPeer });
 
   useEffect(() => {
-    const sub = () => setSnapshot({ connected, sessions, unreadByPeer });
+    const sub = () => setSnapshot({ connected, sessions, unreadByPeer, typingByPeer });
     listeners.add(sub);
     sub();
     return () => {
@@ -134,6 +163,25 @@ export function useChatStore() {
     [user?.username, user?.fullname, user?.avatar_path, isAuthenticated],
   );
 
+  /** Publish a throttled "typing..." signal to a peer (rate-limited so we don't spam). */
+  const sendTyping = useCallback(
+    (peer: string) => {
+      if (!isAuthenticated || !peer || !connected) return;
+      const now = Date.now();
+      if ((lastTypingSent.get(peer) ?? 0) + TYPING_THROTTLE_MS > now) return;
+      lastTypingSent.set(peer, now);
+      try {
+        client?.publish({
+          destination: "/app/chat.typing",
+          body: JSON.stringify({ recipientUsername: peer }),
+        });
+      } catch {
+        // ignore transient connection issues
+      }
+    },
+    [isAuthenticated, connected],
+  );
+
   const unreadTotal = Object.values(snapshot.unreadByPeer).reduce((a, b) => a + b, 0);
   const connectedNow = snapshot.connected;
 
@@ -141,8 +189,11 @@ export function useChatStore() {
     connected: connectedNow,
     sessions: snapshot.sessions,
     unreadByPeer: snapshot.unreadByPeer,
+    typingByPeer: snapshot.typingByPeer,
+    isTypingFor,
     unreadTotal,
     sendToPeer,
+    sendTyping,
     hydrateSession,
     markPeerRead,
     clearActivePeer,
@@ -187,6 +238,17 @@ function ensureConnected() {
           }
 
           publish();
+        } catch {
+          // ignore malformed payload
+        }
+      });
+
+      // Realtime "typing..." indicator from the peer (e.g. "<user> is typing...")
+      client!.subscribe("/user/queue/typing", (message: IMessage) => {
+        try {
+          const body = JSON.parse(message.body);
+          const peer = body?.senderUsername;
+          if (typeof peer === "string" && peer) receiveTyping(peer);
         } catch {
           // ignore malformed payload
         }

@@ -8,9 +8,12 @@ import com.example.communityforum.persistence.entity.Tag;
 import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.LikeRepository;
 import com.example.communityforum.persistence.repository.SavedPostRepository;
+import com.example.communityforum.service.StorageService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -18,10 +21,13 @@ import org.springframework.stereotype.Component;
 public class PostMapper {
     private final LikeRepository likeRepository;
     private final SavedPostRepository savedPostRepository;
+    private final StorageService storageService;
 
-    public PostMapper(LikeRepository likeRepository, SavedPostRepository savedPostRepository) {
+    public PostMapper(LikeRepository likeRepository, SavedPostRepository savedPostRepository,
+                      StorageService storageService) {
         this.likeRepository = likeRepository;
         this.savedPostRepository = savedPostRepository;
+        this.storageService = storageService;
     }
 
     public PostListResponseDTO toListDTO(Post post, User currentUser, Map<Long,Long> likeCountMap, Map<Long, Long> commentCountMap) {
@@ -35,7 +41,7 @@ public class PostMapper {
             authorDTO = new AuthorDTO(
                     author.getId(),
                     author.getUsername(),
-                    author.getAvatarPath());
+                    avatarUrl(author.getAvatarPath()));
         }
 
         return PostListResponseDTO.builder()
@@ -83,7 +89,7 @@ public class PostMapper {
                 .author(user != null ? UserResponseDTO.builder()
                         .id(user.getId())
                         .username(user.getUsername())
-                        .avatar_path(user.getAvatarPath())
+                        .avatar_path(avatarUrl(user.getAvatarPath()))
                         .build() : null)
                 .likeCount(likeCount)
                 .liked(liked)
@@ -95,6 +101,13 @@ public class PostMapper {
                 .build();
 
 
+    }
+
+    private String avatarUrl(String avatarPath) {
+        if (avatarPath == null || avatarPath.isBlank() || avatarPath.startsWith("http")) {
+            return avatarPath;
+        }
+        return storageService.buildFileUrl(avatarPath);
     }
 
     public PostSummaryDTO mapToPostSummaryDTO(Post post, Map<Long, Long> likeCountMap, Map<Long, Long> commentCountMap) {
@@ -119,11 +132,20 @@ public class PostMapper {
     }
 
         private String generateExcerpt(String content) {
-                String text = content == null
-                                ? ""
-                                : content.replaceAll("!\\[[^]]*\\]\\([^)]*\\)", "")
-                                                .replaceAll("\\s+", " ")
-                                                .trim();
-                return text.length() > 100 ? text.substring(0, 100) + "..." : text;
+                if (content == null || content.isBlank()) {
+                        return "";
+                }
+
+                String[] lines = content.split("\\R");
+                String images = java.util.Arrays.stream(lines)
+                                .map(String::trim)
+                                .filter(line -> line.matches("!\\[[^]]*\\]\\([^)]*\\)"))
+                                .limit(4)
+                                .collect(Collectors.joining("\n"));
+                String text = content.replaceAll("!\\[[^]]*\\]\\([^)]*\\)", "")
+                                .replaceAll("\\s+", " ")
+                                .trim();
+                String excerpt = text.length() > 100 ? text.substring(0, 100) + "..." : text;
+                return images.isEmpty() ? excerpt : images + (excerpt.isEmpty() ? "" : "\n" + excerpt);
         }
 }

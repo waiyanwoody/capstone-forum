@@ -13,7 +13,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String base = uploadBaseDir.endsWith("/") ? uploadBaseDir : uploadBaseDir + "/";
-        // serves http://localhost:8080/uploads/** from file:uploads/**
+        // Serves http://localhost:8080/uploads/** from the configured upload directory.
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + base)
                 .setCachePeriod(3600);

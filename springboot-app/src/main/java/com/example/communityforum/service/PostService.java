@@ -148,7 +148,9 @@ public class PostService {
         UserSummaryDTO authorDTO = UserSummaryDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .avatar_path(user.getAvatarPath())
+                .avatar_path(user.getAvatarPath() == null || user.getAvatarPath().isBlank()
+                        ? user.getAvatarPath()
+                        : storageService.buildFileUrl(user.getAvatarPath()))
                 .build();
 
         // 6️⃣ Return response

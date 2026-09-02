@@ -77,12 +77,19 @@ public class ProfileService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .bio(user.getBio())
-                .avatar_path(user.getAvatarPath())
+                .avatar_path(avatarUrl(user.getAvatarPath()))
                 .bio(user.getBio())
                 .createdAt(user.getCreatedAt())
                 .followed(followed)
                 .isFriend(isFriend)
                 .build();
+    }
+
+    private String avatarUrl(String avatarPath) {
+        if (avatarPath == null || avatarPath.isBlank() || avatarPath.startsWith("http")) {
+            return avatarPath;
+        }
+        return fileStorageService.buildFileUrl(avatarPath);
     }
 
     // Get profile statistics

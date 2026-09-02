@@ -10,6 +10,7 @@ import type { Post, PostSummary, UserSummary } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { getPostPreview, getUserAvatar, parseServerDate } from "@/lib/utils"
 import { postTypeLabel } from "@/lib/constants"
+import { PostImageStrip } from "@/components/post-image-strip"
 
 type PostCardProps = {
   post: PostSummary
@@ -75,6 +76,7 @@ export function PostCardSummary({ post,author }: PostCardProps) {
           </div>
 
           {/* Excerpt */}
+          <PostImageStrip content={post.excerpt} />
           <p className="text-sm text-muted-foreground line-clamp-2 text-pretty">{getPostPreview(post.excerpt)}</p>
 
           {/* Meta Info */}

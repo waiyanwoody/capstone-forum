@@ -20,7 +20,7 @@ export function ThreadSidebar({ post }: ThreadSidebarProps) {
           <CardTitle className="text-base">Thread Stats</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center gap-3 text-sm">
+          {/* <div className="flex items-center gap-3 text-sm">
             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Likes</span>
             <span className="ml-auto font-medium">{post.likeCount}</span>
@@ -29,7 +29,7 @@ export function ThreadSidebar({ post }: ThreadSidebarProps) {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Replies</span>
             <span className="ml-auto font-medium">{post.commentCount ?? post.replyCount}</span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-3 text-sm">
             <Eye className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Views</span>

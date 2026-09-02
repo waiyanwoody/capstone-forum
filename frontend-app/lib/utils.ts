@@ -40,3 +40,17 @@ export function getPostPreview(excerpt?: string | null): string {
 
   return text || "Image attachment";
 }
+
+export function getPostImages(content?: string | null): { alt: string; url: string }[] {
+  if (!content) return [];
+
+  return content
+    .split("\n")
+    .map((line) => line.trim().match(/^!\[([^\]]*)\]\((.+)\)$/))
+    .filter((match): match is RegExpMatchArray => match !== null)
+    .slice(0, 4)
+    .map((match) => ({
+      alt: match[1] || "Post image",
+      url: encodeURI(match[2].trim()),
+    }));
+}

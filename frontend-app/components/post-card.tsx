@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns"
 import { getPostPreview, getUserAvatar, parseServerDate } from "@/lib/utils"
 import { postTypeLabel } from "@/lib/constants"
 import { toggleLike } from "@/lib/api/likes"
+import { PostImageStrip } from "@/components/post-image-strip"
 
 type PostCardProps = {
   post: Post
@@ -62,18 +63,18 @@ export function PostCard({ post }: PostCardProps) {
   const accent = (post.tags?.length ?? 0) > 0 ? TAG_ACCENTS[post.id % TAG_ACCENTS.length] : ""
 
   return (
-    <div
-      onClick={goToPost}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          goToPost()
-        }
-      }}
-      role="link"
-      tabIndex={0}
-      className="group relative flex w-full gap-4 rounded-xl border border-border bg-card p-0 transition-all duration-200 hover:border-primary/40 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.18)] hover:translate-y-[-2px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary sm:p-5"
-    >
+<div
+  onClick={goToPost}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      goToPost()
+    }
+  }}
+  role="link"
+  tabIndex={0}
+  className="group relative flex w-full gap-3 rounded-xl border border-border bg-card p-3.5 transition-all duration-200 hover:border-primary/40 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-4 sm:p-5"
+>
       {/* Left accent rail */}
       <span
         className={`hidden w-1 self-stretch rounded-l-xl transition-colors duration-200 sm:block ${
@@ -100,7 +101,7 @@ export function PostCard({ post }: PostCardProps) {
       </Link>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 space-y-2.5 p-4 pl-0 sm:p-0">
+      <div className="flex-1 min-w-0 space-y-2.5 p-4 sm:p-0">
         {/* Top row: status chips + pin */}
         <div className="flex flex-wrap items-center gap-1.5">
           {post.type && (
@@ -134,6 +135,7 @@ export function PostCard({ post }: PostCardProps) {
           <h3 className="text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg sm:leading-snug text-balance">
             {post.title}
           </h3>
+          <PostImageStrip content={post.excerpt} />
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground text-pretty">{getPostPreview(post.excerpt)}</p>
         </Link>
 

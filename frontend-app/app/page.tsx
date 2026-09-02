@@ -63,69 +63,75 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
-          <button
-            onClick={() => setActiveFilter("all")}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === "all"
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            All
-            <span
-              className={`rounded-full px-1.5 text-xs font-semibold ${
-                activeFilter === "all" ? "bg-white/20" : "bg-muted"
-              }`}
-            >
-              {posts?.pages[0]?.totalElements ?? 0}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveFilter("trending")}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === "trending"
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            Trending
-          </button>
-          <button
-            onClick={() => setActiveFilter("solved")}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === "solved"
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Solved
-          </button>
-          <button
-            onClick={() => setActiveFilter("following")}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === "following"
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Star className="h-3.5 w-3.5" />
-            Following
-          </button>
-          <button
-            onClick={() => setActiveFilter("recommended")}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === "recommended"
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            For You
-          </button>
-        </div>
+<div className="w-full overflow-x-auto pb-1 sm:w-fit sm:overflow-visible">
+  <div className="inline-flex min-w-max items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
+    <button
+      onClick={() => setActiveFilter("all")}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-3.5 ${
+        activeFilter === "all"
+          ? "bg-primary text-primary-foreground shadow"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      All
+      <span
+        className={`rounded-full px-1.5 text-xs font-semibold ${
+          activeFilter === "all" ? "bg-white/20" : "bg-muted"
+        }`}
+      >
+        {posts?.pages[0]?.totalElements ?? 0}
+      </span>
+    </button>
+
+    <button
+      onClick={() => setActiveFilter("trending")}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-3.5 ${
+        activeFilter === "trending"
+          ? "bg-primary text-primary-foreground shadow"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <TrendingUp className="h-3.5 w-3.5" />
+      Trending
+    </button>
+
+    <button
+      onClick={() => setActiveFilter("solved")}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-3.5 ${
+        activeFilter === "solved"
+          ? "bg-primary text-primary-foreground shadow"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      Solved
+    </button>
+
+    <button
+      onClick={() => setActiveFilter("following")}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-3.5 ${
+        activeFilter === "following"
+          ? "bg-primary text-primary-foreground shadow"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <Star className="h-3.5 w-3.5" />
+      Following
+    </button>
+
+    <button
+      onClick={() => setActiveFilter("recommended")}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-3.5 ${
+        activeFilter === "recommended"
+          ? "bg-primary text-primary-foreground shadow"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <Sparkles className="h-3.5 w-3.5" />
+      For You
+    </button>
+  </div>
+</div>
 
         <div className="space-y-4">
           {activeFilter === "following" ? (

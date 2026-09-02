@@ -16,11 +16,17 @@ public class ElasticIndexInitializer {
 
     @PostConstruct
     public void initIndex() {
-        IndexOperations indexOps = elasticsearchOperations.indexOps(PostDocument.class);
-        if (!indexOps.exists()) {
-            indexOps.create();
-            indexOps.putMapping(indexOps.createMapping());
-            System.out.println("Elasticsearch index 'posts' successfully created!");
+        try {
+            IndexOperations indexOps = elasticsearchOperations.indexOps(PostDocument.class);
+            if (!indexOps.exists()) {
+                indexOps.create();
+                indexOps.putMapping(indexOps.createMapping());
+                System.out.println("Elasticsearch index 'posts' successfully created!");
+            }
+        } catch (Exception e) {
+            // Elasticsearch is optional in the running deployment (no ES service in
+            // docker-compose). Don't abort startup when it's unreachable.
+            System.out.println("⚠️ Elasticsearch unavailable, skipping index init: " + e.getMessage());
         }
     }
 }

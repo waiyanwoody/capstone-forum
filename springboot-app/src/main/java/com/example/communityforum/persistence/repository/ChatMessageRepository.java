@@ -2,8 +2,10 @@ package com.example.communityforum.persistence.repository;
 
 import com.example.communityforum.persistence.entity.ChatMessageRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,5 +20,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessageRecord, 
             """)
     List<ChatMessageRecord> findBetween(@Param("a") Long a, @Param("b") Long b, @Param("after") LocalDateTime after);
 
-    long deleteByCreatedAtBefore(LocalDateTime cutoff);
+    @Modifying
+    @Transactional
+    @Query("delete from ChatMessageRecord c where c.createdAt < :cutoff")
+    int deleteByCreatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
 }

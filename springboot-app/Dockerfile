@@ -11,9 +11,9 @@ COPY src ./src
 RUN mvn package -DskipTests -B
 
 # 2. Production stage
-FROM eclipse-temurin:17-jre-alpine AS final
+FROM eclipse-temurin:17-jre AS final
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app appuser
 WORKDIR /app
 
 RUN mkdir -p uploads && chown -R appuser:appgroup /app

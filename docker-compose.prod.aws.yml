@@ -1,0 +1,87 @@
+services:
+  db:
+    image: mysql:8
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-Milomilo112}
+      MYSQL_DATABASE: community_forum
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-Milomilo112}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  backend:
+    image: ${BACKEND_IMAGE:-288761758164.dkr.ecr.ap-southeast-1.amazonaws.com/community-forum-backend:latest}
+    env_file:
+      - ./springboot-app/.env
+    environment:
+      DB_URL: ${DB_URL:-jdbc:mysql://db:3306/community_forum}
+      FRONTEND_URL: ${FRONTEND_URL:-http://18.141.189.149:3000}
+      APP_BASE_URL: ${APP_BASE_URL:-http://18.141.189.149:8080}
+      SPRING_RABBITMQ_HOST: ${SPRING_RABBITMQ_HOST:-localhost}
+      ELASTICSEARCH_URIS: ${ELASTICSEARCH_URIS:-http://elasticsearch:9200}
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-288761758164.dkr.ecr.ap-southeast-1.amazonaws.com/community-forum-frontend:latest}
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://18.141.189.149:8080}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  recommendation-service:
+    build: ./recommendation-service
+    image: community-forum-recommendation
+    environment:
+      MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+      MODEL_DIM: "384"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  uploads:
+  esdata:
+  db_data:

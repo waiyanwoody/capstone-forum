@@ -45,5 +45,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/.terraform.lock.hcl
+
 # Verceil / misc
 .vercel

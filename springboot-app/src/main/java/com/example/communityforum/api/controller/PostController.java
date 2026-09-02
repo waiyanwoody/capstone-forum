@@ -141,6 +141,21 @@ public class PostController {
         return ResponseEntity.ok(postService.getLikedPosts());
     }
 
+    // GET personalized "For You" recommendations
+    @GetMapping("/recommended")
+    public ResponseEntity<PageResponse<PostListResponseDTO>> getRecommendedPosts(
+            @ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<PostListResponseDTO> postsPage = postService.getRecommendedPosts(pageable);
+        PageResponse<PostListResponseDTO> response = PageResponse.<PostListResponseDTO>builder()
+                .content(postsPage.getContent())
+                .number(postsPage.getNumber())
+                .size(postsPage.getSize())
+                .totalElements(postsPage.getTotalElements())
+                .totalPages(postsPage.getTotalPages())
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
     // POST toggle solved flag
     @PostMapping("/{id}/solved")
     public ResponseEntity<PostDetailResponseDTO> toggleSolved(@PathVariable Long id) {

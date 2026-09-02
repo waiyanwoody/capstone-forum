@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import type { Post, PostSummary, UserSummary } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { getUserAvatar, parseServerDate } from "@/lib/utils"
+import { postTypeLabel } from "@/lib/constants"
 
 type PostCardProps = {
   post: PostSummary
@@ -65,6 +66,11 @@ export function PostCardSummary({ post,author }: PostCardProps) {
             >
               {post.title}
             </Link>
+            {post.type && (
+              <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex-shrink-0 mt-1">
+                {postTypeLabel(post.type)}
+              </span>
+            )}
             {post.isSolved && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />}
           </div>
 

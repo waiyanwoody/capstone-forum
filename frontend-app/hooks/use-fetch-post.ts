@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { ApiHttpError } from "@/lib/http";
-import { getPosts } from "@/lib/api/posts";
+import { getPosts, getRecommendedPosts } from "@/lib/api/posts";
 import type { PaginatedResponse, Post } from "@/lib/types";
 
-export type FilterTab = "all" | "trending" | "solved" | "following";
+export type FilterTab = "all" | "trending" | "solved" | "following" | "recommended";
 
 export const useFetchPosts = (pageSize = 10, filter: FilterTab = "all") => {
   const query = useInfiniteQuery<PaginatedResponse<Post>, ApiHttpError>({
@@ -15,6 +15,9 @@ export const useFetchPosts = (pageSize = 10, filter: FilterTab = "all") => {
     queryFn: ({ pageParam = 0 }) => {
       if (filter === "solved") {
         return getPosts(pageParam, pageSize, { solved: true });
+      }
+      if (filter === "recommended") {
+        return getRecommendedPosts(pageParam, pageSize);
       }
       return getPosts(pageParam, pageSize);
     },

@@ -15,6 +15,20 @@ services:
       timeout: 5s
       retries: 5
 
+  recommendation-service:
+    build: ./recommendation-service
+    image: community-forum-recommendation
+    environment:
+      MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+      MODEL_DIM: "384"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: elasticsearch
@@ -48,6 +62,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       APP_BASE_URL: http://localhost:8080
       SPRING_RABBITMQ_HOST: localhost
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:8000
     ports:
       - "8080:8080"
     volumes:

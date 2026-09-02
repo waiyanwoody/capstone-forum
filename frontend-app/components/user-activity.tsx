@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { PostCard } from "./post-card"
@@ -19,8 +20,15 @@ type UserActivityProps = {
 
 export function UserActivity({ userPosts, replies = [], likedPosts = [], savedPosts = [] }: UserActivityProps) {
   const [activeTab, setActiveTab] = useState("posts")
+  const router = useRouter()
   const author = userPosts?.author;
   const posts = userPosts?.posts;
+
+  const openReply = (reply: Comment) => {
+    if (!reply.postSlug) return
+    const hash = reply.id ? `#comment-${reply.id}` : ""
+    router.push(`/t/${reply.postSlug}${hash}`)
+  }
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -42,7 +50,21 @@ export function UserActivity({ userPosts, replies = [], likedPosts = [], savedPo
       <TabsContent value="replies" className="space-y-4">
         {replies.length > 0 ? (
           replies.map((reply) => (
-            <Card key={reply.id} className="border-border bg-card hover:bg-accent/5 transition-colors">
+            <Card
+              key={reply.id}
+              onClick={() => openReply(reply)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  openReply(reply)
+                }
+              }}
+              role="link"
+              tabIndex={0}
+              className={`border-border bg-card transition-colors cursor-pointer ${
+                reply.postSlug ? "hover:bg-accent/5 hover:border-primary/40" : ""
+              }`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />

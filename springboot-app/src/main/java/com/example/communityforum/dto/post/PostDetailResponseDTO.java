@@ -23,6 +23,7 @@ public class PostDetailResponseDTO {
     private String content;
     private List<String> tags;
     private String slug;
+    private String type;
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private UserResponseDTO author;

@@ -1,14 +1,19 @@
 package com.example.communityforum.service;
 
+import com.example.communityforum.config.PostConstants;
 import com.example.communityforum.dto.post.*;
 import com.example.communityforum.dto.user.UserSummaryDTO;
 import com.example.communityforum.events.PostCreatedEvent;
 import com.example.communityforum.events.PostUpdatedEvent;
+import com.example.communityforum.exception.HttpStatusException;
 import com.example.communityforum.exception.PermissionDeniedException;
 import com.example.communityforum.exception.ResourceNotFoundException;
 import com.example.communityforum.mapper.PostMapper;
+import com.example.communityforum.persistence.entity.Like;
 import com.example.communityforum.persistence.elasticsearch.PostDocument;
 import com.example.communityforum.persistence.entity.Post;
+import com.example.communityforum.persistence.entity.PostType;
+import com.example.communityforum.persistence.entity.SavedPost;
 import com.example.communityforum.persistence.entity.Tag;
 import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.*;
@@ -16,6 +21,7 @@ import com.example.communityforum.security.SecurityUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -43,6 +49,8 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final FollowRepository followRepository;
     private final ApplicationEventPublisher publisher;
+    private final EmbeddingService embeddingService;
+    private final SavedPostRepository savedPostRepository;
     private final SearchService searchService;
 
     public Page<PostListResponseDTO> getAllPosts(Pageable pageable, Boolean solved, Boolean pinned) {
@@ -153,18 +161,27 @@ public class PostService {
 
     public PostDetailResponseDTO addPost(PostRequestDTO request) {
         User currentUser = securityUtils.getCurrentUser();
+        validateAndCleanTags(request.getTags());
         Post post = new Post();
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
         //ensure post has owner
         post.setUser(currentUser);
         post.setCreatedAt(LocalDateTime.now());
+        if (request.getType() != null) {
+            post.setType(request.getType());
+        }
 
         post.setTags(processTags(request.getTags()));
 
         // generate slug
         String slug = generateSlug(request.getTitle());
         post.setSlug(slug);
+
+        // compute + store embedding via the recommendation microservice
+        List<String> tagNames = post.getTags().stream().map(Tag::getName).toList();
+        String embedText = embeddingService.buildText(request.getTitle(), request.getContent(), tagNames);
+        post.setEmbedding(embeddingService.embedText(embedText));
 
         Post saved = postRepository.save(post);
 
@@ -202,9 +219,33 @@ public class PostService {
         }
         return tagNames.stream()
                 .filter(tagName -> tagName != null && !tagName.trim().isEmpty())
-                .map(tagName -> tagRepository.findByNameIgnoreCase(tagName.trim())
-                        .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName.trim()).build())))
+                .map(tagName -> {
+                    String name = tagName.trim();
+                    // Only allowed tags are attached; already validated upstream.
+                    return tagRepository.findByNameIgnoreCase(name)
+                            .orElseGet(() -> tagRepository.save(Tag.builder().name(name).build()));
+                })
                 .collect(Collectors.toSet());
+    }
+
+    // Validate that provided tags are within the allowed list and not more than MAX_TAGS.
+    private void validateAndCleanTags(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            throw HttpStatusException.of("Select at least one tag",
+                    org.springframework.http.HttpStatus.BAD_REQUEST);
+        }
+        if (tagNames.size() > PostConstants.MAX_TAGS) {
+            throw HttpStatusException.of("You can add up to " + PostConstants.MAX_TAGS + " tags",
+                    org.springframework.http.HttpStatus.BAD_REQUEST);
+        }
+        List<String> invalid = tagNames.stream()
+                .filter(t -> !PostConstants.isAllowedTag(t))
+                .toList();
+        if (!invalid.isEmpty()) {
+            throw HttpStatusException.of("Tag not allowed: " + String.join(", ", invalid)
+                    + ". Allowed tags: " + String.join(", ", PostConstants.ALLOWED_TAGS),
+                    org.springframework.http.HttpStatus.BAD_REQUEST);
+        }
     }
 
     // update post
@@ -216,9 +257,24 @@ public class PostService {
         // security check
         securityUtils.checkOwnerOrAdmin(existingPost);
 
+        if (request.getTags() != null) {
+            validateAndCleanTags(request.getTags());
+            existingPost.setTags(processTags(request.getTags()));
+        }
+
         // update only allowed fields
         existingPost.setTitle(request.getTitle());
         existingPost.setContent(request.getContent());
+        if (request.getType() != null) {
+            existingPost.setType(request.getType());
+        }
+
+        // recompute embedding since title/content changed
+        List<String> tagNames = existingPost.getTags() != null
+                ? existingPost.getTags().stream().map(Tag::getName).toList()
+                : List.of();
+        String embedText = embeddingService.buildText(request.getTitle(), request.getContent(), tagNames);
+        existingPost.setEmbedding(embeddingService.embedText(embedText));;
 
         postRepository.save(existingPost);
 
@@ -322,6 +378,80 @@ public class PostService {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // "For You" recommendations (embedding similarity + popularity)
+    // ─────────────────────────────────────────────────────────────
+    public Page<PostListResponseDTO> getRecommendedPosts(Pageable pageable) {
+        User user = securityUtils.getCurrentUser();
+
+        // Build the user profile vector from posts they liked or saved.
+        Set<Long> signalPostIds = new HashSet<>();
+        List<Post> signalPosts = new java.util.ArrayList<>();
+
+        for (Like like : likeRepository.findByUserIdAndCommentIsNull(user.getId())) {
+            if (like.getPost() != null && like.getPost().getEmbedding() != null) {
+                signalPosts.add(like.getPost());
+            }
+        }
+        for (SavedPost saved : savedPostRepository.findByUserOrderByCreatedAtDesc(user)) {
+            if (saved.getPost() != null && saved.getPost().getEmbedding() != null) {
+                signalPosts.add(saved.getPost());
+            }
+        }
+        for (Post p : signalPosts) {
+            signalPostIds.add(p.getId());
+        }
+
+        byte[] userVector = EmbeddingService.meanNormalized(
+                signalPosts.stream().map(Post::getEmbedding).toList());
+
+        // Candidate posts = all active posts that have an embedding.
+        List<Post> candidates = postRepository.findAll().stream()
+                .filter(p -> p.getEmbedding() != null)
+                .filter(p -> !signalPostIds.contains(p.getId()))
+                .toList();
+
+        Map<Long, Long> likeCountMap = getLikeCountMap(candidates.stream().map(Post::getId).toList());
+        Map<Long, Long> commentCountMap = getCommentCountMap(candidates.stream().map(Post::getId).toList());
+
+        List<Post> ranked = candidates.stream()
+                .sorted(java.util.Comparator.comparingDouble((Post p) -> score(p, likeCountMap, commentCountMap, userVector)).reversed())
+                .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), ranked.size());
+        List<Post> pageContent = start < ranked.size() ? ranked.subList(start, end) : List.of();
+
+        List<PostListResponseDTO> content = pageContent.stream()
+                .map(p -> postMapper.toListDTO(p, user, likeCountMap, commentCountMap))
+                .toList();
+
+        return new PageImpl<>(content, pageable, ranked.size());
+    }
+
+    private double score(Post p, Map<Long, Long> likes, Map<Long, Long> comments, byte[] userVector) {
+        // Normalized popularity component in [0,1].
+        long likesN = likes.getOrDefault(p.getId(), 0L);
+        long commentsN = comments.getOrDefault(p.getId(), 0L);
+        double pop = Math.tanh((p.getViewCount() + likesN * 3.0 + commentsN * 4.0) / 50.0);
+
+        // Similarity component in [0,1].
+        double sim = userVector != null ? EmbeddingService.cosine(userVector, p.getEmbedding()) : 0.0;
+        double recency = Math.exp(-hoursSince(p.getCreatedAt()) / (24.0 * 14.0));
+
+        if (userVector == null) {
+            // Cold start: rely on popularity + recency.
+            return 0.5 * pop + 0.3 * recency;
+        }
+        return 0.6 * sim + 0.25 * pop + 0.15 * recency;
+    }
+
+    private double hoursSince(java.time.LocalDateTime ts) {
+        if (ts == null) return 0;
+        long hours = java.time.Duration.between(ts, java.time.LocalDateTime.now()).toHours();
+        return Math.max(0, hours);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Solved / Pinned toggles
     // ─────────────────────────────────────────────────────────────
     @Transactional
@@ -329,6 +459,11 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post", postId));
         securityUtils.checkOwnerOrAdmin(post);
+        if (post.getType() == null || !post.getType().isSolvable()) {
+            throw HttpStatusException.of(
+                    "Only Discussion and Question posts can be marked as solved",
+                    org.springframework.http.HttpStatus.BAD_REQUEST);
+        }
         post.setSolved(!post.isSolved());
         postRepository.save(post);
 

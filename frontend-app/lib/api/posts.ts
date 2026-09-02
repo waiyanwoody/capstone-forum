@@ -52,6 +52,29 @@ export const getPosts = async (
   }
 };
 
+export const getRecommendedPosts = async (
+  page?: number,
+  pageSize?: number
+): Promise<PaginatedResponse<Post>> => {
+  try {
+    const params = new URLSearchParams();
+    if (page !== undefined && page !== null) params.append("page", page.toString());
+    if (pageSize) params.append("size", pageSize.toString());
+
+    const response = await api.get(`/api/posts/recommended?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    const data = error.response?.data;
+    if (error.response) {
+      if (data && typeof data.status === "number") {
+        throw new ApiHttpError(data);
+      }
+      throw new Error(`Request failed (${error.response.status})`);
+    }
+    throw new Error("Network error or server unreachable");
+  }
+};
+
 export const getPostsByFollowing = async (): Promise<Post[]> => {
   try {
     const response = await api.get("/api/posts/following");

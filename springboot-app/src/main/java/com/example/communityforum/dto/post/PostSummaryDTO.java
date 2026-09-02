@@ -11,6 +11,7 @@ public class PostSummaryDTO {
     private String excerpt;
     private List<String> tags;
     private String slug;
+    private String type;
     private String createdAt;
     private long likeCount;
     private long commentCount;

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import type { Post } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { getUserAvatar, parseServerDate } from "@/lib/utils"
+import { postTypeLabel } from "@/lib/constants"
 import { toggleLike } from "@/lib/api/likes"
 
 type PostCardProps = {
@@ -102,6 +103,11 @@ export function PostCard({ post }: PostCardProps) {
       <div className="flex-1 min-w-0 space-y-2.5 p-4 pl-0 sm:p-0">
         {/* Top row: status chips + pin */}
         <div className="flex flex-wrap items-center gap-1.5">
+          {post.type && (
+            <span className="inline-flex items-center rounded-full bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+              {postTypeLabel(post.type)}
+            </span>
+          )}
           {post.isSolved && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-3 w-3" /> Solved

@@ -39,7 +39,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByPinned(boolean pinned, Pageable pageable);
 
-    @Query("SELECT p.user.id, p.user.username, p.user.fullname, p.user.avatarPath, COUNT(p) FROM Post p WHERE p.deletedAt IS NULL GROUP BY p.user.id, p.user.username, p.user.fullname, p.user.avatarPath ORDER BY COUNT(p) DESC")
+        @Query("SELECT p.user.id, p.user.username, p.user.fullname, p.user.avatarPath, COUNT(p) FROM Post p WHERE p.deletedAt IS NULL GROUP BY p.user.id, p.user.username, p.user.fullname, p.user.avatarPath ORDER BY COUNT(p) DESC")
     List<Object[]> findTopContributors(Pageable pageable);
 
+    @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND p.embedding IS NULL")
+    List<Post> findAllWithNullEmbeddingNotDeleted();
+
 }
+

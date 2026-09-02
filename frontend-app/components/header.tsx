@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Search, Bell, Menu, Plus, Moon, Sun, Monitor, LogOut, User, Settings } from "lucide-react"
+import { Search, Bell, MessageSquare, Menu, Plus, Moon, Sun, Monitor, LogOut, User, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,13 +19,36 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/contexts/auth-context"
 import { getUserAvatar } from "@/lib/utils"
 import { useTheme } from "next-themes"
+import { useUnreadCount } from "@/hooks/use-unread-count"
+import { useChatStore } from "@/hooks/use-chat"
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
+  const { data: unreadCount = 0 } = useUnreadCount()
+  const { unreadTotal: msgUnread } = useChatStore()
   const router = useRouter()
+
+  const [shake, setShake] = useState(false)
+  const prevUnread = useRef(unreadCount)
+  const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      setShake(true)
+      if (shakeTimer.current) clearTimeout(shakeTimer.current)
+      shakeTimer.current = setTimeout(() => setShake(false), 600)
+    }
+    prevUnread.current = unreadCount
+  }, [unreadCount])
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimer.current) clearTimeout(shakeTimer.current)
+    }
+  }, [])
 
   const avatarUrl = getUserAvatar(user?.avatar_path);
 
@@ -101,11 +124,28 @@ export function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Notifications */}
+                {/* Messages */}
                 <Button variant="ghost" size="icon" className="relative hidden sm:flex" asChild>
+                  <Link href="/messages" aria-label="Messages">
+                    <MessageSquare className="h-5 w-5" />
+                    {msgUnread > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-border">
+                        {msgUnread > 99 ? "99+" : msgUnread}
+                      </span>
+                    )}
+                    <span className="sr-only">Messages</span>
+                  </Link>
+                </Button>
+
+                {/* Notifications */}
+                <Button variant="ghost" size="icon" className={`relative hidden sm:flex ${shake ? "animate-shake" : ""}`} asChild>
                   <Link href="/notifications">
                     <Bell className="h-5 w-5" />
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-error" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-border">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                     <span className="sr-only">Notifications</span>
                   </Link>
                 </Button>
@@ -238,10 +278,30 @@ export function Header() {
                           asChild
                           onClick={() => setMobileMenuOpen(false)}
                         >
+                          <Link href="/messages">
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Messages
+                            {msgUnread > 0 && (
+                              <span className="absolute top-1.5 left-8 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                                {msgUnread > 99 ? "99+" : msgUnread}
+                              </span>
+                            )}
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="justify-start relative"
+                          asChild
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Link href="/notifications">
                             <Bell className="h-4 w-4 mr-2" />
                             Notifications
-                            <span className="absolute top-2 left-8 h-2 w-2 rounded-full bg-error" />
+                            {unreadCount > 0 && (
+                              <span className="absolute top-1.5 left-8 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </span>
+                            )}
                           </Link>
                         </Button>
                         <Button

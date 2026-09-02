@@ -16,7 +16,7 @@ export function SearchFilters() {
         <TabsList className="grid w-full sm:w-auto grid-cols-3 bg-muted">
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="tags">Tags</TabsTrigger>
+          {/* <TabsTrigger value="tags">Tags</TabsTrigger> */}
         </TabsList>
       </Tabs>
 

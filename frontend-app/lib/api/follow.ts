@@ -154,3 +154,21 @@ export const getFollowing = async (
     throw new Error("Network error or server unreachable");
   }
 };
+
+// Friends (mutual follows) of the current user — the chat conversation list
+export const getFriends = async (): Promise<UserResponse[]> => {
+  try {
+    const response = await api.get(`/api/follows/friends`);
+    return response.data;
+  } catch (error: any) {
+    const data = error.response?.data;
+
+    if (error.response) {
+      if (data && typeof data.status === "number") {
+        throw new ApiHttpError(data);
+      }
+      throw new Error(`Request failed (${error.response.status})`);
+    }
+    throw new Error("Network error or server unreachable");
+  }
+};

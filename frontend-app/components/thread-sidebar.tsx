@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { Post } from "@/lib/types"
 import { format } from "date-fns"
+import { parseServerDate } from "@/lib/utils"
 
 type ThreadSidebarProps = {
   post: Post
@@ -37,7 +38,7 @@ export function ThreadSidebar({ post }: ThreadSidebarProps) {
           <div className="flex items-center gap-3 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Created</span>
-            <span className="ml-auto font-medium text-xs">{format(new Date(post.createdAt), "MMM d, yyyy")}</span>
+            <span className="ml-auto font-medium text-xs">{format(parseServerDate(post.createdAt), "MMM d, yyyy")}</span>
           </div>
         </CardContent>
       </Card>

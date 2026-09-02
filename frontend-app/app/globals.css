@@ -151,3 +151,33 @@
 * {
   @apply transition-colors duration-200;
 }
+
+/* Hide scrollbar (keep scroll behavior) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Notification bell shake on new unread */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px) rotate(-6deg); }
+  40% { transform: translateX(3px) rotate(6deg); }
+  60% { transform: translateX(-2px) rotate(-4deg); }
+  80% { transform: translateX(2px) rotate(4deg); }
+}
+@utility animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Staggered entrance for post cards */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@utility animate-card-rise {
+  animation: card-rise 0.4s ease-out both;
+}

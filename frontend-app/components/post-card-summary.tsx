@@ -1,13 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { MessageSquare, ThumbsUp, Pin, CheckCircle2, Clock } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Post, PostSummary, UserSummary } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
-import { getUserAvatar } from "@/lib/utils"
+import { getUserAvatar, parseServerDate } from "@/lib/utils"
 
 type PostCardProps = {
   post: PostSummary
@@ -16,11 +17,27 @@ type PostCardProps = {
 
 export function PostCardSummary({ post,author }: PostCardProps) {
 
-  const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
+  const timeAgo = formatDistanceToNow(parseServerDate(post.createdAt), { addSuffix: true })
   const avatarUrl = getUserAvatar(author.avatar_path);
+  const router = useRouter()
+
+  const goToPost = () => {
+    if (post.slug) router.push(`/t/${post.slug}`)
+  }
 
   return (
-    <article className="group relative bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-all">
+    <article
+      onClick={goToPost}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          goToPost()
+        }
+      }}
+      role="link"
+      tabIndex={0}
+      className="group relative bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
       {/* Pinned indicator */}
       {post.isPinned && (
         <div className="absolute top-4 right-4">
@@ -43,6 +60,7 @@ export function PostCardSummary({ post,author }: PostCardProps) {
           <div className="flex items-start gap-2">
             <Link
               href={`/t/${post.slug}`}
+              onClick={(e) => e.stopPropagation()}
               className="flex-1 text-lg font-semibold text-foreground hover:text-primary transition-colors text-balance"
             >
               {post.title}
@@ -86,6 +104,7 @@ export function PostCardSummary({ post,author }: PostCardProps) {
           </Button>
           <Link
             href={`/t/${post.slug}`}
+            onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <MessageSquare className="h-4 w-4" />

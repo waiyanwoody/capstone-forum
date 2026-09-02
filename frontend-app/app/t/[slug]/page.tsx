@@ -1,10 +1,13 @@
 "use client"
 
 import { use, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { ThreadDetail } from "@/components/thread-detail"
 import { ThreadComments } from "@/components/thread-comments"
 import { ThreadSidebar } from "@/components/thread-sidebar"
+import { Button } from "@/components/ui/button"
 import { getPostBySlug } from "@/lib/api/posts"
 import type { Post } from "@/lib/types"
 
@@ -16,6 +19,7 @@ type ThreadPageProps = {
 
 export default function ThreadPage({ params }: ThreadPageProps) {
   const { slug } = use(params)
+  const router = useRouter()
 
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
@@ -51,6 +55,16 @@ export default function ThreadPage({ params }: ThreadPageProps) {
   return (
     <AppShell sidebar={<ThreadSidebar post={post} />}>
       <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+
         <ThreadDetail post={post} />
 
         <ThreadComments post={post} />

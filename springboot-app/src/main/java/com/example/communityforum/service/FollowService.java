@@ -101,4 +101,29 @@ public class FollowService {
                 .map(Follow::getFollower)
                 .toList();
     }
+
+    /**
+     * Friends = users who mutually follow each other (follower AND following).
+     * These are the only users allowed to start a chat session.
+     */
+    public List<User> getFriends(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("UserId", userId));
+
+        List<User> following = followRepository.findByFollower(user)
+                .stream()
+                .map(Follow::getFollowing)
+                .toList();
+
+        return following.stream()
+                .filter(u -> followRepository.existsByFollowerAndFollowing(u, user))
+                .toList();
+    }
+
+    /** Are two users friends (mutual follow)? Used as the chat authorization gate. */
+    public boolean areFriends(User a, User b) {
+        if (a == null || b == null || a.getId().equals(b.getId())) return false;
+        return followRepository.existsByFollowerAndFollowing(a, b)
+                && followRepository.existsByFollowerAndFollowing(b, a);
+    }
 }

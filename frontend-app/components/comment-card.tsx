@@ -11,7 +11,8 @@ import {
   ThumbsUp,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ActiveAvatar } from "@/components/active-avatar"
+import { parseServerDate } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
@@ -90,7 +91,7 @@ export function CommentCard({
 
   const timeAgo = comment.createdAt
     ? formatDistanceToNow(
-        new Date(
+        parseServerDate(
           comment.createdAt.replace(
             /\.(\d{3})\d+$/,
             ".$1"
@@ -99,16 +100,6 @@ export function CommentCard({
         { addSuffix: true }
       )
     : "Unknown date"
-
-  // Create initials from author's fullname
-  const initials =
-    comment.authorFullname
-      ?.slice(0, 2)
-      .toUpperCase() ||
-    comment.authorUsername
-      ?.slice(0, 2)
-      .toUpperCase() ||
-    "U"
 
   // Handle update
   const handleUpdate = () => {
@@ -151,7 +142,7 @@ export function CommentCard({
   }
 
   return (
-    <div className={`bg-card border rounded-lg p-4 space-y-4 ${isBest ? "border-green-500/60 bg-green-50/40 dark:bg-green-900/10" : "border-border"}`}>
+    <div id={`comment-${comment.id}`} className={`bg-card border rounded-lg p-4 space-y-4 ${isBest ? "border-green-500/60 bg-green-50/40 dark:bg-green-900/10" : "border-border"}`}>
 
       {/* Best reply badge */}
       {isBest && (
@@ -166,11 +157,12 @@ export function CommentCard({
 
         {/* Avatar */}
         <Link href={`/u/${comment.authorUsername}`}>
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <ActiveAvatar
+            username={comment.authorUsername}
+            fullname={comment.authorFullname}
+            avatarPath={comment.authorAvatar}
+            className="h-10 w-10"
+          />
         </Link>
 
         {/* Author information */}

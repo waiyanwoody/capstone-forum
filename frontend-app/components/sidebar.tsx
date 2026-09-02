@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { TrendingUp, Users, Tag, PenSquare, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,6 +14,7 @@ import { getUserAvatar } from "@/lib/utils"
 
 export function Sidebar() {
   const { user } = useAuth()
+  const router = useRouter()
 
   const popularTagsQuery = useQuery({
     queryKey: ["popular-tags"],
@@ -51,6 +53,9 @@ export function Sidebar() {
                   key={tag.name}
                   variant="secondary"
                   className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() =>
+                    router.push(`/search?tab=tags&tag=${encodeURIComponent(tag.name)}`)
+                  }
                 >
                   {tag.name}
                   <span className="ml-1 text-xs opacity-70">{tag.count}</span>

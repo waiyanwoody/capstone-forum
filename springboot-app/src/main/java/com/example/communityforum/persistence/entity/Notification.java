@@ -34,6 +34,11 @@ public class Notification {
     @Column(nullable = false, length = 255)
     private String message;
 
+    // Target post/comment the notification refers to (nullable for pure system/follow notices)
+    private Long postId;
+    private String postSlug;
+    private Long commentId;
+
     // Whether the receiver has read the notification
     // MySQL "read" is a reserved word -> backticks quote the column name
     @Column(name = "`read`", nullable = false)

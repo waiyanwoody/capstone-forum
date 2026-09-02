@@ -14,8 +14,10 @@ import { useToggleSave } from "@/hooks/use-toggle-save"
 import { deletePost, toggleSolved } from "@/lib/api/posts"
 import type { Post } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
+import { parseServerDate } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { Loader2 } from "lucide-react"
+import { LikersDialog } from "@/components/likers-dialog"
 
 type ThreadDetailProps = {
   post: Post
@@ -27,6 +29,7 @@ export function ThreadDetail({ post }: ThreadDetailProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSolved, setIsSolved] = useState(post.isSolved ?? false)
   const [solvedPending, setSolvedPending] = useState(false)
+  const [likersOpen, setLikersOpen] = useState(false)
   const { liked, likeCount, toggle, isPending } = useToggleLike(
     post.id,
     post.liked ?? false,
@@ -36,7 +39,7 @@ export function ThreadDetail({ post }: ThreadDetailProps) {
     post.id,
     post.isSaved ?? false
   )
-  const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
+  const timeAgo = formatDistanceToNow(parseServerDate(post.createdAt), { addSuffix: true })
 
   const isOwnerOrAdmin =
     !!user && (String(user.id) === String(post.author.id) || user.role === "ADMIN")
@@ -161,6 +164,25 @@ export function ThreadDetail({ post }: ThreadDetailProps) {
           />
           <span>{likeCount}</span>
         </Button>
+
+        {likeCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => setLikersOpen(true)}
+          >
+            <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+            Liked by {likeCount}
+          </Button>
+        )}
+
+        <LikersDialog
+          open={likersOpen}
+          onOpenChange={setLikersOpen}
+          postId={post.id}
+          likeCount={likeCount}
+        />
 
         <Button
           variant={saved ? "default" : "outline"}

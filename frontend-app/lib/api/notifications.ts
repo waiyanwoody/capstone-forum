@@ -21,3 +21,34 @@ export const getNotificationsByUserId = async (
     throw new Error("Network error or server unreachable");
   }
 };
+
+export const getUnreadCount = async (userId: number | string): Promise<number> => {
+  try {
+    const response = await api.get(`/api/notifications/${userId}/unread-count`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error("Failed to load unread notification count");
+  }
+};
+
+export const markAllNotificationsRead = async (
+  userId: number | string
+): Promise<number> => {
+  try {
+    const response = await api.post(`/api/notifications/${userId}/read-all`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error("Failed to mark notifications as read");
+  }
+};
+
+export const markNotificationRead = async (
+  notificationId: number | string
+): Promise<number> => {
+  try {
+    const response = await api.post(`/api/notifications/${notificationId}/read`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error("Failed to mark notification as read");
+  }
+};

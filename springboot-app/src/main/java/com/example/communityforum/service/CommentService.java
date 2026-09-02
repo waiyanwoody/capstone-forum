@@ -110,6 +110,9 @@ public class CommentService {
                     .receiverId(post.getUser().getId())     // post owner is the receiver
                     .senderId(currentUser.getId())          // commenter
                     .postTitle(post.getTitle())     // for title of the post
+                    .postId(post.getId())
+                    .postSlug(post.getSlug())
+                    .commentId(saved.getId())
                     .build());
         }
 

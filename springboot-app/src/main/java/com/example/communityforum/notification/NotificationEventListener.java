@@ -1,11 +1,17 @@
 package com.example.communityforum.notification;
 
+import com.example.communityforum.dto.LikeRequestDTO;
 import com.example.communityforum.dto.notification.NotificationResponseDTO;
 import com.example.communityforum.events.CommentCreatedEvent;
 import com.example.communityforum.events.LikeToggledEvent;
 import com.example.communityforum.events.NewFollowerEvent;
+import com.example.communityforum.persistence.entity.Comment;
 import com.example.communityforum.persistence.entity.Notification;
+import com.example.communityforum.persistence.entity.Post;
+import com.example.communityforum.persistence.entity.User;
+import com.example.communityforum.persistence.repository.CommentRepository;
 import com.example.communityforum.persistence.repository.NotificationRepository;
+import com.example.communityforum.persistence.repository.PostRepository;
 import com.example.communityforum.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +28,8 @@ public class NotificationEventListener {
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
 
     @Async
     @EventListener
@@ -39,28 +47,17 @@ public class NotificationEventListener {
                     .type("COMMENT")
                     .message("Your post '" + event.getPostTitle() + "' got a new comment.")
                     .read(false)
+                    .postId(event.getPostId())
+                    .postSlug(event.getPostSlug())
+                    .commentId(event.getCommentId())
                     .build();
             Notification saved = notificationRepository.save(notification);
-
-            NotificationResponseDTO dto = new NotificationResponseDTO(
-                    saved.getId(),
-                    saved.getMessage(),
-                    saved.getType(),
-                    saved.getCreatedAt().toString());
-
-            String username = userRepository.findById(event.getReceiverId())
-                    .map(u -> u.getUsername())
-                    .orElse(null);
-            if (username != null) {
-                // User-destination: client subscribes to /user/queue/notifications
-                messagingTemplate.convertAndSendToUser(username, "/queue/notifications", dto);
-                log.info("Notification sent to user {} via /user/queue/notifications", username);
-            }
+            send(saved);
         } catch (Exception e) {
-            log.error("Failed to process notification", e);
+            log.error("Failed to process comment notification", e);
         }
     }
-    
+
     @Async
     @EventListener
     @Transactional
@@ -74,82 +71,91 @@ public class NotificationEventListener {
             if (event.getActorId().equals(event.getOwnerId()))
                 return;
 
-            // Validate receiver (owner) exists and get username to route user-destination
-            var ownerOpt = userRepository.findById(event.getOwnerId());
-            if (ownerOpt.isEmpty()) {
-                log.warn("LikeToggled: owner not found id={}", event.getOwnerId());
+            if (!userRepository.existsById(event.getOwnerId()))
                 return;
-            }
-            var owner = ownerOpt.get();
 
-            // Get actor username for message if available
+            // Resolve target post/comment so the notification can route to it
+            Long postId = null;
+            String postSlug = null;
+            Long commentId = null;
+            if (event.getTargetType() == LikeRequestDTO.TargetType.POST) {
+                Post p = postRepository.findById(event.getTargetId()).orElse(null);
+                if (p != null) {
+                    postId = p.getId();
+                    postSlug = p.getSlug();
+                }
+            } else if (event.getTargetType() == LikeRequestDTO.TargetType.COMMENT) {
+                commentId = event.getTargetId();
+                Comment c = commentRepository.findById(event.getTargetId()).orElse(null);
+                if (c != null && c.getPost() != null) {
+                    postId = c.getPost().getId();
+                    postSlug = c.getPost().getSlug();
+                }
+            }
+
             String actorName = userRepository.findById(event.getActorId())
-                    .map(u -> u.getUsername())
+                    .map(User::getUsername)
                     .orElse("Someone");
 
-            String targetLabel = event.getTargetType() == com.example.communityforum.dto.LikeRequestDTO.TargetType.POST
+            String targetLabel = event.getTargetType() == LikeRequestDTO.TargetType.POST
                     ? "post"
                     : "comment";
             String message = actorName + " liked your " + targetLabel + ".";
 
-            // Save notification
             Notification notification = Notification.builder()
                     .receiverId(event.getOwnerId())
                     .senderId(event.getActorId())
                     .type("LIKE")
                     .message(message)
                     .read(false)
+                    .postId(postId)
+                    .postSlug(postSlug)
+                    .commentId(commentId)
                     .build();
             Notification saved = notificationRepository.save(notification);
-
-            // Send to user queue
-            NotificationResponseDTO dto = new NotificationResponseDTO(
-                    saved.getId(),
-                    saved.getMessage(),
-                    saved.getType(),
-                    saved.getCreatedAt().toString());
-            messagingTemplate.convertAndSendToUser(owner.getUsername(), "/queue/notifications", dto);
-            log.info("Like notification sent to user {} via /user/queue/notifications", owner.getUsername());
+            send(saved);
         } catch (Exception e) {
-            log.error("Failed to process LikeToggledEvent: {}", event, e);
+            log.error("Failed to process LikeToggledEvent", e);
         }
     }
 
-    // Add new follower event handling
     @Async
     @EventListener
     @Transactional
     public void handleNewFollower(NewFollowerEvent event) {
         try {
-            
-            var followedOpt = userRepository.findById(event.getFollowingId());
-            var followerName = userRepository.findById(event.getFollowerId())
-                    .map(u -> u.getUsername())
-                    .orElse("Someone");
+            if (!userRepository.existsById(event.getFollowingId()))
+                return;
 
-            String message = followerName + " started following you.";
+            var followerName = userRepository.findById(event.getFollowerId())
+                    .map(User::getUsername)
+                    .orElse("Someone");
 
             Notification notification = Notification.builder()
                     .receiverId(event.getFollowingId())
                     .senderId(event.getFollowerId())
                     .type("FOLLOW")
-                    .message(message)
+                    .message(followerName + " started following you.")
                     .read(false)
                     .build();
             Notification saved = notificationRepository.save(notification);
-
-            NotificationResponseDTO dto = new NotificationResponseDTO(
-                    saved.getId(),
-                    saved.getMessage(),
-                    saved.getType(),
-                    saved.getCreatedAt().toString()
-            );
-
-            String followedUsername = followedOpt.get().getUsername();
-            messagingTemplate.convertAndSendToUser(followedUsername, "/queue/notifications", dto);
-            log.info("Follow notification sent to user {} via /user/queue/notifications", followedUsername);
+            send(saved);
         } catch (Exception e) {
-            log.error("Failed to process NewFollowerEvent: {}", event, e);
+            log.error("Failed to process NewFollowerEvent", e);
+        }
+    }
+
+    /** Persist-and-deliver helper: broadcasts the enriched DTO to the receiver's queue. */
+    private void send(Notification notification) {
+        User sender = userRepository.findById(notification.getSenderId()).orElse(null);
+        NotificationResponseDTO dto = NotificationResponseDTO.fromEntity(notification, sender);
+
+        String username = userRepository.findById(notification.getReceiverId())
+                .map(User::getUsername)
+                .orElse(null);
+        if (username != null) {
+            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", dto);
+            log.info("Notification sent to user {} via /user/queue/notifications", username);
         }
     }
 }

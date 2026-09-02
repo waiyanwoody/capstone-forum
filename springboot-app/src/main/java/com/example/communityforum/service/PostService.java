@@ -28,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ public class PostService {
     private final EmbeddingService embeddingService;
     private final SavedPostRepository savedPostRepository;
     private final SearchService searchService;
+    private final StorageService storageService;
 
     public Page<PostListResponseDTO> getAllPosts(Pageable pageable, Boolean solved, Boolean pinned) {
         Page<Post> postPage;
@@ -160,11 +162,15 @@ public class PostService {
     }
 
     public PostDetailResponseDTO addPost(PostRequestDTO request) {
+        return addPost(request, List.of());
+    }
+
+    public PostDetailResponseDTO addPost(PostRequestDTO request, List<MultipartFile> images) {
         User currentUser = securityUtils.getCurrentUser();
         validateAndCleanTags(request.getTags());
         Post post = new Post();
         post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
+        post.setContent(appendUploadedImages(request.getContent(), images));
         //ensure post has owner
         post.setUser(currentUser);
         post.setCreatedAt(LocalDateTime.now());
@@ -251,6 +257,10 @@ public class PostService {
     // update post
 //    @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(@postRepository.findById(#postId).orElse(null))")
     public PostDetailResponseDTO updatePost(long id, PostRequestDTO request) {
+        return updatePost(id, request, List.of());
+    }
+
+    public PostDetailResponseDTO updatePost(long id, PostRequestDTO request, List<MultipartFile> images) {
         Post existingPost = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post", id));
 
@@ -264,7 +274,7 @@ public class PostService {
 
         // update only allowed fields
         existingPost.setTitle(request.getTitle());
-        existingPost.setContent(request.getContent());
+        existingPost.setContent(appendUploadedImages(request.getContent(), images));
         if (request.getType() != null) {
             existingPost.setType(request.getType());
         }
@@ -279,6 +289,33 @@ public class PostService {
         postRepository.save(existingPost);
 
         return postMapper.toDetailDTO(existingPost,securityUtils.getCurrentUser());
+    }
+
+    private String appendUploadedImages(String content, List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) {
+            return content;
+        }
+
+        StringBuilder contentWithImages = new StringBuilder(content);
+        for (MultipartFile image : images) {
+            if (image == null || image.isEmpty()) {
+                continue;
+            }
+            String contentType = image.getContentType();
+            if (contentType == null || !(contentType.equals("image/jpeg")
+                    || contentType.equals("image/png")
+                    || contentType.equals("image/gif"))) {
+                throw HttpStatusException.of("Only JPEG, PNG, and GIF images are allowed",
+                        org.springframework.http.HttpStatus.BAD_REQUEST);
+            }
+
+            String relativePath = storageService.upload(image, "posts");
+            String imageUrl = storageService.buildFileUrl(relativePath);
+            String filename = image.getOriginalFilename() == null ? "image" : image.getOriginalFilename();
+            contentWithImages.append("\n\n![").append(filename.replace("]", "\\]"))
+                    .append("](").append(imageUrl).append(")");
+        }
+        return contentWithImages.toString();
     }
 
 

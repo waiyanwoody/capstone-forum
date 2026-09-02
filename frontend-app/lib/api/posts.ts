@@ -5,7 +5,8 @@ import { CreatePostPayload } from "@/hooks/use-create-post";
 
 export const createPost = async (payload: CreatePostPayload): Promise<Post> => {
   try {
-    const response = await api.post("/api/posts", payload);
+    const request = payload.images?.length ? toMultipartPost(payload) : payload;
+    const response = await api.post("/api/posts", request);
     return response.data;
   } catch (error: any) {
     const data = error.response?.data;
@@ -17,6 +18,14 @@ export const createPost = async (payload: CreatePostPayload): Promise<Post> => {
     }
     throw new Error("Network error or server unreachable");
   }
+};
+
+const toMultipartPost = (payload: CreatePostPayload): FormData => {
+  const formData = new FormData();
+  const { images, ...post } = payload;
+  formData.append("post", new Blob([JSON.stringify(post)], { type: "application/json" }));
+  images?.forEach((image) => formData.append("images", image));
+  return formData;
 };
 
 /**
@@ -48,6 +57,31 @@ export const getPosts = async (
       throw new Error(`Request failed (${error.response.status})`);
     }
 
+    throw new Error("Network error or server unreachable");
+  }
+};
+
+export const searchPosts = async (
+  keyword: string,
+  page = 0,
+  pageSize = 100
+): Promise<PaginatedResponse<Post>> => {
+  try {
+    const params = new URLSearchParams({
+      keyword,
+      page: page.toString(),
+      size: pageSize.toString(),
+    });
+    const response = await api.get(`/api/posts/search?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    const data = error.response?.data;
+    if (error.response) {
+      if (data && typeof data.status === "number") {
+        throw new ApiHttpError(data);
+      }
+      throw new Error(`Request failed (${error.response.status})`);
+    }
     throw new Error("Network error or server unreachable");
   }
 };
@@ -134,7 +168,8 @@ export const updatePost = async (
   payload: CreatePostPayload
 ): Promise<Post> => {
   try {
-    const response = await api.put(`/api/posts/${id}`, payload);
+    const request = payload.images?.length ? toMultipartPost(payload) : payload;
+    const response = await api.put(`/api/posts/${id}`, request);
     return response.data;
   } catch (error: any) {
     const data = error.response?.data;

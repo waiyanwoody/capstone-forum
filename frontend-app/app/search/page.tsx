@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, SlidersHorizontal, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
-import { getPosts } from "@/lib/api/posts"
+import { getPosts, searchPosts } from "@/lib/api/posts"
 import { Badge } from "@/components/ui/badge"
 import type { Post } from "@/lib/types"
 import { parseServerDate } from "@/lib/utils"
@@ -33,8 +33,8 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>(initialSelectedTags)
 
   const postsQuery = useQuery({
-    queryKey: ["posts", "search-all"],
-    queryFn: () => getPosts(0, 100),
+    queryKey: ["posts", "search", query.trim()],
+    queryFn: () => query.trim() ? searchPosts(query.trim()) : getPosts(0, 100),
     staleTime: 1000 * 60 * 2,
   })
 
@@ -48,20 +48,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
   const filteredPosts = useMemo(() => {
     let results = allPosts
-
-    // Filter by search query
-    if (query.trim()) {
-      const lowerQuery = query.toLowerCase()
-      results = results.filter(
-        (post) =>
-          post.title.toLowerCase().includes(lowerQuery) ||
-          post.content?.toLowerCase().includes(lowerQuery) ||
-          post.excerpt?.toLowerCase().includes(lowerQuery) ||
-          (post.author?.username ?? "").toLowerCase().includes(lowerQuery) ||
-          (post.author?.fullname ?? "").toLowerCase().includes(lowerQuery) ||
-          (post.tags ?? []).some((tag) => tag.toLowerCase().includes(lowerQuery)),
-      )
-    }
 
     // Filter by selected tags
     if (selectedTags.length > 0) {

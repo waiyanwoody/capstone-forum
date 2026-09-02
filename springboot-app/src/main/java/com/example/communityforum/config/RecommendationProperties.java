@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "recommendation")
 public class RecommendationProperties {
-    private String serviceUrl = "http://localhost:8000";
+    private String serviceUrl = "http://recommendation-service:8000";
     private boolean enabled = true;
     private int timeoutMs = 15000;
 

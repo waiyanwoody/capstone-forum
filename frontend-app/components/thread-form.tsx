@@ -46,7 +46,7 @@ export function ThreadForm({ initialData, isEditing = false }: ThreadFormProps) 
   )
   const [previewMode, setPreviewMode] = useState<"write" | "preview">("write")
 
-  const [images, setImages] = useState<{ url: string; name: string }[]>([])
+  const [images, setImages] = useState<{ file: File; url: string; name: string }[]>([])
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -59,6 +59,7 @@ export function ThreadForm({ initialData, isEditing = false }: ThreadFormProps) 
         .slice(0, MAX_IMAGES - images.length)
       if (incoming.length === 0) return
       const newImages = incoming.map((f) => ({
+        file: f,
         url: URL.createObjectURL(f),
         name: f.name,
       }))
@@ -76,7 +77,11 @@ export function ThreadForm({ initialData, isEditing = false }: ThreadFormProps) 
   }
 
   const removeImage = (url: string) => {
-    setImages((prev) => prev.filter((img) => img.url !== url))
+    setImages((prev) => {
+      const removed = prev.find((img) => img.url === url)
+      if (removed) URL.revokeObjectURL(removed.url)
+      return prev.filter((img) => img.url !== url)
+    })
   }
 
   const handleSelectSuggestion = (tag: string) => {
@@ -165,6 +170,7 @@ export function ThreadForm({ initialData, isEditing = false }: ThreadFormProps) 
       content: content,
       tags: tags,
       type: typeToApi(type),
+      images: images.map((image) => image.file),
     };
 
     if (isEditing && initialData?.id) {

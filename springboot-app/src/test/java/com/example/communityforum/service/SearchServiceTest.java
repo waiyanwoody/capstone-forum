@@ -3,9 +3,9 @@ package com.example.communityforum.service;
 import com.example.communityforum.dto.post.PostListResponseDTO;
 import com.example.communityforum.dto.user.AuthorDTO;
 import com.example.communityforum.mapper.PostMapper;
-import com.example.communityforum.persistence.elasticsearch.PostDocument;
 import com.example.communityforum.persistence.entity.Post;
 import com.example.communityforum.persistence.entity.User;
+import com.example.communityforum.persistence.elasticsearch.PostSearchHit;
 import com.example.communityforum.persistence.repository.CommentRepository;
 import com.example.communityforum.persistence.repository.LikeRepository;
 import com.example.communityforum.persistence.repository.PostRepository;
@@ -83,26 +83,15 @@ class SearchServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        PostDocument document = PostDocument.builder()
-                .id(7L)
-                .title("Spring Boot Search")
-                .content("This is a long content block used in search results")
-                .slug("spring-boot-search")
-                .authorUsername("alice")
-                .tagNames(List.of("java", "spring"))
-                .createdAt(LocalDateTime.now())
-                .commentCount(4)
-                .pinned(false)
-                .solved(false)
-                .build();
-
-        SearchHit<PostDocument> hit = mock(SearchHit.class);
-        SearchHits<PostDocument> hits = mock(SearchHits.class);
-        when(hit.getContent()).thenReturn(document);
+        PostSearchHit searchHit = new PostSearchHit();
+        searchHit.setId(7L);
+        SearchHit<PostSearchHit> hit = mock(SearchHit.class);
+        SearchHits<PostSearchHit> hits = mock(SearchHits.class);
+        when(hit.getContent()).thenReturn(searchHit);
         when(hits.stream()).thenAnswer(invocation -> Stream.of(hit));
         when(hits.getTotalHits()).thenReturn(1L);
 
-        when(elasticsearchTemplate.search(any(Query.class), eq(PostDocument.class))).thenReturn(hits);
+        when(elasticsearchTemplate.search(any(Query.class), eq(PostSearchHit.class))).thenReturn(hits);
         when(postRepository.findAllById(List.of(7L))).thenReturn(List.of(post));
         when(postMapper.toListDTO(eq(post), eq(null), any(), any())).thenReturn(PostListResponseDTO.builder()
                 .id(7L)

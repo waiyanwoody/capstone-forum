@@ -31,3 +31,12 @@ export function parseServerDate(value?: string | null): Date {
   const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(value);
   return new Date(hasOffset ? value : value + "Z");
 };
+
+export function getPostPreview(excerpt?: string | null): string {
+  const text = (excerpt ?? "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text || "Image attachment";
+}

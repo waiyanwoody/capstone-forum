@@ -41,9 +41,7 @@ public class PostMapper {
         return PostListResponseDTO.builder()
                 .id(post.getId())
                 .title(post.getTitle())
-                .excerpt(post.getContent().length() > 100
-                        ? post.getContent().substring(0, 100) + "..."
-                        : post.getContent())
+                .excerpt(generateExcerpt(post.getContent()))
                 .tags(post.getTags() != null
                         ? post.getTags().stream()
                                 .map(Tag::getName)
@@ -103,9 +101,7 @@ public class PostMapper {
         return PostSummaryDTO.builder()
                 .id(post.getId())
                 .title(post.getTitle())
-                .excerpt(post.getContent().length() > 100
-                        ? post.getContent().substring(0, 100) + "..."
-                        : post.getContent())
+                .excerpt(generateExcerpt(post.getContent()))
                 .tags(post.getTags() != null
                         ? post.getTags()
                         .stream()
@@ -121,4 +117,13 @@ public class PostMapper {
                 .solved(post.isSolved())
                 .build();
     }
+
+        private String generateExcerpt(String content) {
+                String text = content == null
+                                ? ""
+                                : content.replaceAll("!\\[[^]]*\\]\\([^)]*\\)", "")
+                                                .replaceAll("\\s+", " ")
+                                                .trim();
+                return text.length() > 100 ? text.substring(0, 100) + "..." : text;
+        }
 }

@@ -9,6 +9,7 @@ export interface CreatePostPayload {
   content: string;
   tags: string[];
   type?: string;
+  images?: File[];
 }
 
 export const useCreatePost = () => {

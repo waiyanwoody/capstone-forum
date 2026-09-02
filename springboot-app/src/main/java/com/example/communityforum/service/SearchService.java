@@ -3,6 +3,7 @@ package com.example.communityforum.service;
 import com.example.communityforum.dto.post.PostListResponseDTO;
 import com.example.communityforum.mapper.PostMapper;
 import com.example.communityforum.persistence.elasticsearch.PostDocument;
+import com.example.communityforum.persistence.elasticsearch.PostSearchHit;
 import com.example.communityforum.persistence.entity.Post;
 import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.CommentRepository;
@@ -59,26 +60,23 @@ public class SearchService {
         NativeQuery searchQuery = NativeQuery.builder()
                 .withQuery(q -> q
                         .multiMatch(m -> m
-                                .fields("title^2", "content")
+                                .fields("title^2", "content", "authorUsername", "tagNames")
                                 .query(keyword)))
                 .withPageable(pageable)
                 .build();
 
-        SearchHits<PostDocument> searchHits = elasticsearchTemplate.search(searchQuery, PostDocument.class);
+        // Read only hit IDs here. Mapping the full document can fail when the
+        // index contains legacy documents with fields from an older schema.
+        SearchHits<PostSearchHit> searchHits = elasticsearchTemplate.search(searchQuery, PostSearchHit.class);
 
-        List<PostDocument> documents = searchHits.stream()
-                .map(hit -> hit.getContent())
-                .filter(Objects::nonNull)
+        List<Long> postIds = searchHits.stream()
+            .map(hit -> hit.getContent() == null ? null : hit.getContent().getId())
+            .filter(Objects::nonNull)
                 .toList();
 
-        if (documents.isEmpty()) {
+        if (postIds.isEmpty()) {
             return Page.empty(pageable);
         }
-
-        List<Long> postIds = documents.stream()
-                .map(PostDocument::getId)
-                .filter(Objects::nonNull)
-                .toList();
 
         Map<Long, Post> postMap = postRepository.findAllById(postIds).stream()
                 .collect(Collectors.toMap(Post::getId, Function.identity()));
@@ -87,9 +85,7 @@ public class SearchService {
         Map<Long, Long> commentCountMap = getCommentCountMap(postIds);
         final User currentUser = resolveCurrentUser();
 
-        List<PostListResponseDTO> postDtos = documents.stream()
-                .map(PostDocument::getId)
-                .filter(Objects::nonNull)
+        List<PostListResponseDTO> postDtos = postIds.stream()
                 .map(postMap::get)
                 .filter(Objects::nonNull)
                 .map(post -> postMapper.toListDTO(post, currentUser, likeCountMap, commentCountMap))

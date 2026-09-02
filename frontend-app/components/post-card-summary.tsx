@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Post, PostSummary, UserSummary } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
-import { getUserAvatar, parseServerDate } from "@/lib/utils"
+import { getPostPreview, getUserAvatar, parseServerDate } from "@/lib/utils"
 import { postTypeLabel } from "@/lib/constants"
 
 type PostCardProps = {
@@ -75,7 +75,7 @@ export function PostCardSummary({ post,author }: PostCardProps) {
           </div>
 
           {/* Excerpt */}
-          <p className="text-sm text-muted-foreground line-clamp-2 text-pretty">{post.excerpt}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 text-pretty">{getPostPreview(post.excerpt)}</p>
 
           {/* Meta Info */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

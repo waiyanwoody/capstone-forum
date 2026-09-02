@@ -30,8 +30,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
@@ -99,10 +101,25 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(postService.addPost(request));
     }
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostDetailResponseDTO> addPostWithImages(
+            @Valid @RequestPart("post") PostRequestDTO request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(postService.addPost(request, images));
+    }
+
     //Update post by id
     @PutMapping("/{id}")
     public ResponseEntity<PostDetailResponseDTO> updatePost(@PathVariable Long id, @RequestBody PostRequestDTO request) {
             return ResponseEntity.ok(postService.updatePost(id,request));
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostDetailResponseDTO> updatePostWithImages(
+            @PathVariable Long id,
+            @Valid @RequestPart("post") PostRequestDTO request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        return ResponseEntity.ok(postService.updatePost(id, request, images));
     }
 
     // DELETE -> soft delete current user's or admin

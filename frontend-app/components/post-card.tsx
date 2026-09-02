@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Post } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
-import { getUserAvatar, parseServerDate } from "@/lib/utils"
+import { getPostPreview, getUserAvatar, parseServerDate } from "@/lib/utils"
 import { postTypeLabel } from "@/lib/constants"
 import { toggleLike } from "@/lib/api/likes"
 
@@ -134,7 +134,7 @@ export function PostCard({ post }: PostCardProps) {
           <h3 className="text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg sm:leading-snug text-balance">
             {post.title}
           </h3>
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground text-pretty">{post.excerpt}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground text-pretty">{getPostPreview(post.excerpt)}</p>
         </Link>
 
         {/* Tags */}

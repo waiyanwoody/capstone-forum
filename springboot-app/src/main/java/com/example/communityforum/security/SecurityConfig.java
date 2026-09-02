@@ -3,6 +3,7 @@ package com.example.communityforum.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,6 +34,7 @@ public class SecurityConfig {
 
     // --- Swagger Security ---
     @Bean
+    @Order(1)
     public SecurityFilterChain swaggerSecurityChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/docs", "/swagger-ui/**", "/v3/api-docs/**")
@@ -47,6 +49,7 @@ public class SecurityConfig {
 
     // --- Main JWT Security ---
     @Bean
+    @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())

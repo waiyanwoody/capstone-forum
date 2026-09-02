@@ -78,9 +78,17 @@ public class Post {
     @Column(name = "is_solved", nullable = false)
     private boolean solved = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "post_type", length = 20)
+    private PostType type = PostType.DISCUSSION;
+
     @Column(name = "view_count", nullable = false)
     private long viewCount = 0;
 
     @Column(name = "best_comment_id")
     private Long bestCommentId;
+
+    @Column(name = "embedding", columnDefinition = "BLOB")
+    @JsonIgnore
+    private byte[] embedding;
 }

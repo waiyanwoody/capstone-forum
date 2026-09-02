@@ -8,6 +8,7 @@ export interface CreatePostPayload {
   title: string;
   content: string;
   tags: string[];
+  type?: string;
 }
 
 export const useCreatePost = () => {

@@ -15,6 +15,7 @@ import { deletePost, toggleSolved } from "@/lib/api/posts"
 import type { Post } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { parseServerDate } from "@/lib/utils"
+import { postIsSolvable, postTypeLabel } from "@/lib/constants"
 import { useAuth } from "@/contexts/auth-context"
 import { Loader2 } from "lucide-react"
 import { LikersDialog } from "@/components/likers-dialog"
@@ -94,6 +95,11 @@ export function ThreadDetail({ post }: ThreadDetailProps) {
               {post.author.fullname}
             </Link>
             <span className="text-sm text-muted-foreground">@{post.author.username}</span>
+            {post.type && (
+              <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                {postTypeLabel(post.type)}
+              </span>
+            )}
             {/* {post.isSolved && (
               <Badge variant="outline" className="gap-1 border-green-500/50 text-green-600 dark:text-green-400">
                 <CheckCircle2 className="h-3 w-3" />
@@ -197,7 +203,7 @@ export function ThreadDetail({ post }: ThreadDetailProps) {
           {saved ? "Saved" : "Save"}
         </Button>
 
-        {isOwnerOrAdmin && (
+        {isOwnerOrAdmin && postIsSolvable(post.type) && (
           <Button
             variant={isSolved ? "default" : "outline"}
             size="sm"

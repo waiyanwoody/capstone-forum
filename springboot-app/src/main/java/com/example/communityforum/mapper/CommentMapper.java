@@ -36,6 +36,7 @@ public class CommentMapper {
                 .authorAvatar(comment.getUser() != null ? comment.getUser().getAvatarPath() : null)
                 .createdAt(comment.getCreatedAt())
                 .postId(comment.getPost() != null ? comment.getPost().getId() : null)
+                .postSlug(comment.getPost() != null ? comment.getPost().getSlug() : null)
                 .likeCount(likeRepository.countByCommentId(comment.getId()))
                 .liked(liked)
                 .best(comment.isBest())

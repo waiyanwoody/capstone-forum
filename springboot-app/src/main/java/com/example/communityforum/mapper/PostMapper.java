@@ -50,6 +50,7 @@ public class PostMapper {
                                 .toList()
                         : List.of())
                 .slug(post.getSlug())
+                .type(post.getType() != null ? post.getType().name() : "DISCUSSION")
                 .createdAt(post.getCreatedAt())
                 .author(authorDTO) //  embedded author info
                 .likeCount(likeCountMap.getOrDefault(post.getId(), 0L))
@@ -79,6 +80,7 @@ public class PostMapper {
                     .toList()
                 : List.of())
                 .slug(post.getSlug())
+                .type(post.getType() != null ? post.getType().name() : "DISCUSSION")
                 .createdAt(post.getCreatedAt())
                 .author(user != null ? UserResponseDTO.builder()
                         .id(user.getId())
@@ -111,6 +113,7 @@ public class PostMapper {
                         .toList()
                         : List.of())
                 .slug(post.getSlug())
+                .type(post.getType() != null ? post.getType().name() : "DISCUSSION")
                 .createdAt(post.getCreatedAt().toString())
                 .likeCount(likeCountMap.getOrDefault(post.getId(), 0L))
                 .commentCount(commentCountMap.getOrDefault(post.getId(), 0L))

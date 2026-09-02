@@ -17,6 +17,7 @@ public class CommentResponseDTO {
     private String authorFullname;
     private String authorAvatar;
     private long postId;
+    private String postSlug;
     private LocalDateTime createdAt;
 
     private long likeCount;

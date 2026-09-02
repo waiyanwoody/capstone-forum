@@ -68,6 +68,7 @@ export default function EditThreadPage({ params }: EditThreadPageProps) {
                 title: post.title,
                 content: post.content,
                 tags: post.tags ?? [],
+                type: post.type,
               }}
               isEditing
             />

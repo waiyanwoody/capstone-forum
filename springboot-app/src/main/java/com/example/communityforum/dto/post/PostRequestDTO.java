@@ -1,5 +1,6 @@
 package com.example.communityforum.dto.post;
 
+import com.example.communityforum.persistence.entity.PostType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -19,5 +20,7 @@ public class PostRequestDTO {
     private String content;
 
     private List<String> tags;
+
+    private PostType type;
 
 }

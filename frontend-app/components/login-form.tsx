@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
+import { ApiHttpError } from "@/lib/http"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 
@@ -27,15 +28,10 @@ export function LoginForm() {
       await login(emailOrUsername, password)
     } catch (err: any) {
       console.log('error:', err);
-      if (err.name === 'ApiHttpError') {
-        const fieldErrors = err.errors as Record<string, string> | undefined
-        if (fieldErrors?.email) setError(fieldErrors.email)
-        // Fallback to top-level message
-        if (!fieldErrors || Object.keys(fieldErrors).length === 0) {
-          setError(err.message || 'Registration failed')
-        }
+      if (err instanceof ApiHttpError) {
+        setError(err.message || 'Login failed. Please try again.')
       } else {
-        setError('Failed to create account. Please try again.')
+        setError('Login failed. Please try again. Check your credentials and try again.')
       }
     } finally {
       setIsLoading(false)
@@ -149,10 +145,7 @@ export function LoginForm() {
         </Button>
       </div>
 
-      <div className="text-xs text-center text-muted-foreground p-3 bg-muted/50 rounded-lg">
-        Demo credentials: <span className="font-mono">demo@example.com</span> /{" "}
-        <span className="font-mono">password</span>
-      </div>
+
     </form>
   )
 }

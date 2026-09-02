@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { AppShell } from "@/components/app-shell"
 import { Sidebar } from "@/components/sidebar"
 import { PostCard } from "@/components/post-card"
-import { Loader2, TrendingUp, CheckCircle2, Star } from "lucide-react"
+import { Loader2, TrendingUp, CheckCircle2, Star, Sparkles } from "lucide-react"
 import { useFetchPosts, type FilterTab } from "@/hooks/use-fetch-post"
 import { getPostsByFollowing } from "@/lib/api/posts"
 import { ProtectedRoute } from "@/components/protected-route"
@@ -113,6 +113,17 @@ export default function HomePage() {
           >
             <Star className="h-3.5 w-3.5" />
             Following
+          </button>
+          <button
+            onClick={() => setActiveFilter("recommended")}
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              activeFilter === "recommended"
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            For You
           </button>
         </div>
 

@@ -4,6 +4,7 @@ export type Post = {
   content: string;
   tags: string[];
   slug: string;
+  type?: string;
   createdAt: string;
   author: {
     id: number;
@@ -34,6 +35,7 @@ export type PostSummary = {
   createdAt: string;
   likeCount: number;
   commentCount: number;
+  type?: string;
 };
 
 export interface UserProfile {
@@ -111,6 +113,7 @@ export type Comment = {
   authorFullname: string;
   authorAvatar?: string;
   postId: number;
+  postSlug?: string;
   createdAt: string;
   replies: Comment[];
   likeCount?: number;

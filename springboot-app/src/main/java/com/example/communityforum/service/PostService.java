@@ -2,6 +2,8 @@ package com.example.communityforum.service;
 
 import com.example.communityforum.dto.post.*;
 import com.example.communityforum.dto.user.UserSummaryDTO;
+import com.example.communityforum.events.PostCreatedEvent;
+import com.example.communityforum.events.PostUpdatedEvent;
 import com.example.communityforum.exception.PermissionDeniedException;
 import com.example.communityforum.exception.ResourceNotFoundException;
 import com.example.communityforum.mapper.PostMapper;
@@ -11,6 +13,7 @@ import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.*;
 import com.example.communityforum.security.SecurityUtils;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +41,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final FollowRepository followRepository;
+    private final ApplicationEventPublisher publisher;
 
     public Page<PostListResponseDTO> getAllPosts(Pageable pageable, Boolean solved, Boolean pinned) {
         Page<Post> postPage;
@@ -160,7 +164,12 @@ public class PostService {
         String slug = generateSlug(request.getTitle());
         post.setSlug(slug);
 
-        postRepository.save(post);
+        Post saved = postRepository.save(post);
+
+        // Broadcast new post to all connected clients
+        PostListResponseDTO postDTO = postMapper.toListDTO(saved, currentUser, Map.of(), Map.of());
+        publisher.publishEvent(new PostCreatedEvent(postDTO));
+
         return postMapper.toDetailDTO(post, currentUser);
     }
 
@@ -315,7 +324,12 @@ public class PostService {
         securityUtils.checkOwnerOrAdmin(post);
         post.setSolved(!post.isSolved());
         postRepository.save(post);
-        return postMapper.toDetailDTO(post, securityUtils.getCurrentUser());
+
+        User currentUser = securityUtils.getCurrentUser();
+        PostListResponseDTO postDTO = postMapper.toListDTO(post, currentUser, getLikeCountMap(List.of(post.getId())), getCommentCountMap(List.of(post.getId())));
+        publisher.publishEvent(new PostUpdatedEvent(postDTO));
+
+        return postMapper.toDetailDTO(post, currentUser);
     }
 
     @Transactional

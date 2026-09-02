@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, use } from "react"
 import { AppShell } from "@/components/app-shell"
 import { PostCard } from "@/components/post-card"
 import { Input } from "@/components/ui/input"
@@ -12,19 +12,25 @@ import { useQuery } from "@tanstack/react-query"
 import { getPosts } from "@/lib/api/posts"
 import { Badge } from "@/components/ui/badge"
 import type { Post } from "@/lib/types"
+import { parseServerDate } from "@/lib/utils"
 
 type SearchPageProps = {
-  searchParams: {
+  searchParams: Promise<{
     q?: string
-  }
+    tag?: string
+    tab?: string
+  }>
 }
 
 export default function SearchPage({ searchParams }: SearchPageProps) {
-  const initialQuery = searchParams.q || ""
+  const params = use(searchParams)
+  const initialQuery = params.q || ""
+  const initialTab = params.tab === "tags" ? "tags" : "posts"
+  const initialSelectedTags = params.tag ? [params.tag] : []
   const [query, setQuery] = useState(initialQuery)
-  const [activeTab, setActiveTab] = useState("posts")
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [sortBy, setSortBy] = useState("relevance")
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialSelectedTags)
 
   const postsQuery = useQuery({
     queryKey: ["posts", "search-all"],
@@ -64,7 +70,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
     // Sort results
     if (sortBy === "recent") {
-      results = [...results].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      results = [...results].sort((a, b) => parseServerDate(b.createdAt).getTime() - parseServerDate(a.createdAt).getTime())
     } else if (sortBy === "popular") {
       results = [...results].sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0))
     }
@@ -138,7 +144,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           </DropdownMenu>
         </div>
 
-        {allTags.length > 0 && (
+        {activeTab !== "tags" && allTags.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium">Filter by tags:</p>
             <div className="flex flex-wrap gap-2">
@@ -170,23 +176,43 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
               </div>
             )
           ) : activeTab === "tags" ? (
-            allTags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {allTags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant={selectedTags.includes(tag) ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-primary/80"
-                    onClick={() => toggleTag(tag)}
-                  >
-                    {tag}
-                    {selectedTags.includes(tag) && <X className="ml-1 h-3 w-3" />}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">No tags found</div>
-            )
+            <div className="space-y-6">
+              {allTags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? "default" : "outline"}
+                      className="cursor-pointer hover:bg-primary/80"
+                      onClick={() => toggleTag(tag)}
+                    >
+                      {tag}
+                      {selectedTags.includes(tag) && <X className="ml-1 h-3 w-3" />}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">No tags found</div>
+              )}
+
+              {selectedTags.length > 0 && (
+                <div className="border-t border-border pt-6">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Posts tagged{" "}
+                    <span className="font-semibold text-foreground">
+                      {selectedTags.map((t) => `#${t}`).join(", ")}
+                    </span>
+                  </p>
+                  {filteredPosts.length > 0 ? (
+                    filteredPosts.map((post) => <PostCard key={post.id} post={post} />)
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No posts with these tags. Try adjusting your search.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               User search is not available yet.

@@ -155,7 +155,14 @@ export type Notification = {
   message: string
   createdAt: string
   read: boolean
-  link?: string
+  // Actor (sender) info
+  senderUsername?: string
+  senderFullname?: string
+  senderAvatar?: string
+  // Where the notification points
+  postId?: number | null
+  postSlug?: string | null
+  commentId?: number | null
 }
 
 // export interface Comment {

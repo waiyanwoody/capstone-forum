@@ -1,6 +1,7 @@
 package com.example.communityforum.service;
 
 import com.example.communityforum.dto.LikeRequestDTO;
+import com.example.communityforum.dto.user.UserResponseDTO;
 import com.example.communityforum.events.LikeToggledEvent;
 import com.example.communityforum.exception.ResourceNotFoundException;
 import com.example.communityforum.persistence.entity.*;
@@ -9,6 +10,8 @@ import com.example.communityforum.security.SecurityUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class LikeService {
@@ -100,5 +103,17 @@ public class LikeService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment",commentId));
         return likeRepository.countByComment(comment);
+    }
+
+    /** Users who liked a post, most recent first. */
+    public List<UserResponseDTO> getPostLikers(Long postId) {
+        if (!postRepository.existsById(postId)) {
+            throw new ResourceNotFoundException("Post", postId);
+        }
+        return likeRepository.findByPostIdAndCommentIsNullOrderByCreatedAtDesc(postId)
+                .stream()
+                .map(Like::getUser)
+                .map(UserResponseDTO::fromEntity)
+                .toList();
     }
 }

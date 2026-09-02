@@ -1,8 +1,25 @@
 import { ApiHttpError } from "@/lib/http";
 import { api } from "./client";
 import type { Post } from "@/lib/types";
+import type { UserResponse } from "@/lib/api/follow";
 
 export type LikeTargetType = "POST" | "COMMENT";
+
+export const getPostLikers = async (postId: number): Promise<UserResponse[]> => {
+  try {
+    const response = await api.get(`/api/likes/post/${postId}`);
+    return response.data ?? [];
+  } catch (error: any) {
+    const data = error.response?.data;
+    if (error.response) {
+      if (data && typeof data.status === "number") {
+        throw new ApiHttpError(data);
+      }
+      throw new Error(`Request failed (${error.response.status})`);
+    }
+    throw new Error("Network error or server unreachable");
+  }
+};
 
 export type LikeToggleResult = {
   liked: boolean;

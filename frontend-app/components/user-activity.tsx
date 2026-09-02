@@ -8,6 +8,7 @@ import { MessageSquare, ThumbsUp, Bookmark } from "lucide-react"
 import type { Post, Comment, UserPostsResponse } from "@/lib/types"
 import { format } from "date-fns"
 import { PostCardSummary } from "./post-card-summary"
+import { parseServerDate } from "@/lib/utils"
 
 type UserActivityProps = {
   userPosts: UserPostsResponse | null
@@ -47,7 +48,7 @@ export function UserActivity({ userPosts, replies = [], likedPosts = [], savedPo
                   <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div className="flex-1 space-y-2">
                     <div className="text-sm text-muted-foreground">
-                      {reply.authorFullname} replied {format(new Date(reply.createdAt), "MMM d, yyyy")}
+                      {reply.authorFullname} replied {format(parseServerDate(reply.createdAt), "MMM d, yyyy")}
                     </div>
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <p className="text-foreground">{reply.content}</p>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
-import { getUserAvatar } from "@/lib/utils"
+import { getUserAvatar, parseServerDate } from "@/lib/utils"
 import { ProfileStatus, UserProfile as UserProfileModel } from "@/lib/types"
 import FollowButton from "./follow-button"
 
@@ -63,7 +63,7 @@ export function UserProfile({ user,isCurrentUser,stats }: UserProfileProps) {
               {user.created_at && (
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
-                  <span>Joined {format(new Date(user.created_at), "MMMM yyyy")}</span>
+                  <span>Joined {format(parseServerDate(user.created_at), "MMMM yyyy")}</span>
                 </div>
               )}
             </div>

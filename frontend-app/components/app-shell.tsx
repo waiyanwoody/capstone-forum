@@ -19,9 +19,8 @@ export function AppShell({ children, sidebar, showSidebar = true }: AppShellProp
           <div className="flex gap-8 min-h-full">
             <div className="flex-1 min-w-0">{children}</div>
 
-            {/* Sidebar stays fixed */}
             {showSidebar && sidebar && (
-              <aside className="hidden lg:block w-80 shrink-0 sticky top-0 h-full overflow-y-auto">
+              <aside className="hidden lg:block w-80 shrink-0 self-start sticky top-8 max-h-[calc(100svh-6rem)] overflow-y-auto no-scrollbar">
                 {sidebar}
               </aside>
             )}

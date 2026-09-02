@@ -73,4 +73,15 @@ public class FollowController {
                         .map(UserResponseDTO::fromEntity)
                         .toList());
     }
+
+    // Friends (mutual follows) of the current user — the chat conversation list
+    @GetMapping("/friends")
+    public ResponseEntity<List<UserResponseDTO>> getFriends() {
+        User currentUser = securityUtils.getCurrentUser();
+        return ResponseEntity.ok(
+                followService.getFriends(currentUser.getId())
+                        .stream()
+                        .map(UserResponseDTO::fromEntity)
+                        .toList());
+    }
 }

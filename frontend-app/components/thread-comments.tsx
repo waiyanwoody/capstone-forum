@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "react-hot-toast"
 import { CommentForm } from "@/components/comment-form"
@@ -25,6 +26,25 @@ export function ThreadComments({ post }: ThreadCommentsProps) {
     queryFn: () => getCommentsByPostId(post.id),
   })
 
+  const comments = data?.content ?? []
+  const commentCount = data?.totalElements ?? 0
+
+  // Scroll to the comment referenced by #comment-{id} (from a notification) once loaded
+  useEffect(() => {
+    const m = window.location.hash.match(/^#comment-(\d+)$/)
+    if (m) {
+      const t = setTimeout(() => {
+        document.getElementById(`comment-${m[1]}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+        const el = document.getElementById(`comment-${m[1]}`)
+        if (el) {
+          el.classList.add("ring-2", "ring-primary/50")
+          setTimeout(() => el.classList.remove("ring-2", "ring-primary/50"), 3000)
+        }
+      }, 150)
+      return () => clearTimeout(t)
+    }
+  }, [isLoading, comments.length])
+
   const markSolutionMutation = useMutation({
     mutationFn: (commentId: number) => markBestSolution(commentId, post.id),
     onSuccess: () => {
@@ -48,9 +68,6 @@ export function ThreadComments({ post }: ThreadCommentsProps) {
     )
   }
 
-  const comments = data?.content ?? []
-  const count = data?.totalElements ?? 0
-
   const isOwnerOrAdmin =
     !!user && (user.id === post.author.id || user.role === "ADMIN")
 
@@ -59,7 +76,7 @@ export function ThreadComments({ post }: ThreadCommentsProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">
-        {count} {count === 1 ? "Reply" : "Replies"}
+        {commentCount} {commentCount === 1 ? "Reply" : "Replies"}
       </h2>
 
       <CommentForm postId={post.id} />

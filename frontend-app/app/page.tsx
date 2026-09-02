@@ -6,7 +6,6 @@ import { AppShell } from "@/components/app-shell"
 import { Sidebar } from "@/components/sidebar"
 import { PostCard } from "@/components/post-card"
 import { Loader2, TrendingUp, CheckCircle2, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { useFetchPosts, type FilterTab } from "@/hooks/use-fetch-post"
 import { getPostsByFollowing } from "@/lib/api/posts"
 import { ProtectedRoute } from "@/components/protected-route"
@@ -56,67 +55,75 @@ export default function HomePage() {
     <AppShell sidebar={<Sidebar />}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-balance">Discussions</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-balance sm:text-3xl">Discussions</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Join the conversation — {posts?.pages[0]?.totalElements ?? 0} threads and growing
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          <Button
-            variant={activeFilter === "all" ? "default" : "ghost"}
-            size="sm"
+        <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
+          <button
             onClick={() => setActiveFilter("all")}
-            className={
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               activeFilter === "all"
-                ? "bg-card hover:bg-card/80 text-foreground border border-border"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-            }
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
             All
-          </Button>
-          <Button
-            variant={activeFilter === "trending" ? "default" : "ghost"}
-            size="sm"
+            <span
+              className={`rounded-full px-1.5 text-xs font-semibold ${
+                activeFilter === "all" ? "bg-white/20" : "bg-muted"
+              }`}
+            >
+              {posts?.pages[0]?.totalElements ?? 0}
+            </span>
+          </button>
+          <button
             onClick={() => setActiveFilter("trending")}
-            className={
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               activeFilter === "trending"
-                ? "bg-card hover:bg-card/80 text-foreground border border-border"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-            }
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
-            <TrendingUp className="h-4 w-4 mr-1.5" />
+            <TrendingUp className="h-3.5 w-3.5" />
             Trending
-          </Button>
-          <Button
-            variant={activeFilter === "solved" ? "default" : "ghost"}
-            size="sm"
+          </button>
+          <button
             onClick={() => setActiveFilter("solved")}
-            className={
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               activeFilter === "solved"
-                ? "bg-card hover:bg-card/80 text-foreground border border-border"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-            }
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
-            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            <CheckCircle2 className="h-3.5 w-3.5" />
             Solved
-          </Button>
-          <Button
-            variant={activeFilter === "following" ? "default" : "ghost"}
-            size="sm"
+          </button>
+          <button
             onClick={() => setActiveFilter("following")}
-            className={
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               activeFilter === "following"
-                ? "bg-card hover:bg-card/80 text-foreground border border-border"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-            }
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
-            <Star className="h-4 w-4 mr-1.5" />
+            <Star className="h-3.5 w-3.5" />
             Following
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-4">
           {activeFilter === "following" ? (
             followingPosts.length > 0 ? (
-              followingPosts.map((post) => <PostCard key={post.id} post={post} />)
+              followingPosts.map((post, i) => (
+                <div key={post.id} className="animate-card-rise" style={{ animationDelay: `${Math.min(i, 10) * 60}ms` }}>
+                  <PostCard post={post} />
+                </div>
+              ))
             ) : !followingQuery.isLoading && !followingQuery.isFetching ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>You are not following anyone yet</p>
@@ -125,8 +132,10 @@ export default function HomePage() {
             ) : null
           ) : (
             posts?.pages.map((page, pageIndex) =>
-              page.content.map(post => (
-                <PostCard key={`${pageIndex}-${post.id}`} post={post} />
+              page.content.map((post, i) => (
+                <div key={`${pageIndex}-${post.id}`} className="animate-card-rise" style={{ animationDelay: `${Math.min(i, 10) * 60}ms` }}>
+                  <PostCard post={post} />
+                </div>
               ))
             )
           )}

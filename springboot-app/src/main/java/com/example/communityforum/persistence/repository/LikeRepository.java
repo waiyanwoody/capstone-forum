@@ -31,4 +31,8 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     // All post Likes by a given user (for liked-posts list)
     List<Like> findByUserIdAndCommentIsNull(Long userId);
+
+    // Users who liked a post (ordered by most recent)
+    @Query("SELECT l FROM Like l WHERE l.post.id = :postId AND l.comment IS NULL ORDER BY l.createdAt DESC")
+    List<Like> findByPostIdAndCommentIsNullOrderByCreatedAtDesc(@Param("postId") Long postId);
 }

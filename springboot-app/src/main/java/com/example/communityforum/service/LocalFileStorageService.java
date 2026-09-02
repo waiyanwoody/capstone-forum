@@ -1,6 +1,7 @@
 package com.example.communityforum.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -11,11 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
 @Service
-public class FileStorageService {
+public class LocalFileStorageService implements StorageService {
     @Value("${file.upload-base-dir}")
     private String uploadBaseDir;
 
-    // Upload file and return URL-encoded relative path (avatars/xxx%5D.jpg)
+    @Override
     public String upload(MultipartFile file, String folder) {
         try {
             Path uploadPath = Paths.get(uploadBaseDir, folder);
@@ -23,30 +24,27 @@ public class FileStorageService {
                 Files.createDirectories(uploadPath);
             }
             String original = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
-            // keep raw filename on disk
             String safeFileName = System.currentTimeMillis() + "_" + original.replaceAll("\\s+", "_");
             Path filePath = uploadPath.resolve(safeFileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // store ENCODED relative path so it matches URL (encode each segment)
-            String encoded = encodePath(folder + "/" + safeFileName);
-            return encoded;
+            return encodePath(folder + "/" + safeFileName);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file: " + e.getMessage(), e);
         }
     }
 
-    // Build URL using already-encoded relative path (no re-encode)
+    @Override
     public String buildFileUrl(String relativePathEncoded) {
         String normalized = relativePathEncoded.replace("\\", "/");
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/")
                 .path(normalized)
-                .build(true) // keep encoded as-is
+                .build(true)
                 .toUriString();
     }
 
-    // Delete file by decoding stored relative path back to filesystem path
+    @Override
     public void deleteFile(String relativePathEncoded) {
         try {
             String decoded = UriUtils.decode(relativePathEncoded, StandardCharsets.UTF_8);

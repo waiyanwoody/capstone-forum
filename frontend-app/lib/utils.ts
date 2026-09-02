@@ -7,12 +7,20 @@ export function cn(...inputs: ClassValue[]) {
 
 export const getUserAvatar = (url: string | undefined) => {
   if (!url || url === "/placeholder.svg") return null;
-  // Assuming the API URL is stored in an environment variable
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-  const avatar = url.startsWith("http") ? url : `${apiUrl}/uploads/${url}`;
-  console.log(avatar);
 
-  return avatar;
+   // If the URL is already a full absolute URL, return it directly
+  if (url.startsWith("http")) return url;
+
+  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE; // e.g., 's3' or 'local'
+
+  if (storageType === "s3") {
+    const s3Url = process.env.NEXT_PUBLIC_S3_API_URL;
+    return s3Url ? `${s3Url}/${url}` : url;
+  }
+
+  // Default / Fallback: redirect to localhost
+  const localApiUrl = process.env.NEXT_PUBLIC_LOCAL_API_URL || "http://localhost:8080";
+  return `${localApiUrl}/uploads/${url}`;
 };
 
 // Backend emits naive LocalDateTime strings in UTC (no offset marker).

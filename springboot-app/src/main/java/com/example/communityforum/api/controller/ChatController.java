@@ -1,6 +1,7 @@
 package com.example.communityforum.api.controller;
 
 import com.example.communityforum.dto.chat.ChatMessageDTO;
+import com.example.communityforum.dto.chat.ChatTypingDTO;
 import com.example.communityforum.persistence.entity.ChatMessageRecord;
 import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.ChatMessageRepository;
@@ -92,5 +93,40 @@ public class ChatController {
         // Deliver to both parties' private queues
         messagingTemplate.convertAndSendToUser(recipient.getUsername(), DM_QUEUE, message);
         messagingTemplate.convertAndSendToUser(sender.getUsername(), DM_QUEUE, message);
+    }
+
+    /**
+     * Realtime "typing..." indicator. The sender tells the recipient they are
+     * typing so the UI can show "X is typing...". Payload carries the sender's
+     * username/fullname. Only delivered if the two are friends.
+     */
+    @MessageMapping("/chat.typing")
+    public void typing(@Payload ChatTypingDTO incoming, Principal principal) {
+        if (incoming == null || principal == null) {
+            return;
+        }
+
+        String senderName = principal.getName();
+        String recipientName = incoming.getRecipientUsername() == null
+                ? "" : incoming.getRecipientUsername().trim();
+        if (recipientName.isEmpty() || recipientName.equalsIgnoreCase(senderName)) {
+            return;
+        }
+
+        User sender = userRepository.findByUsername(senderName).orElse(null);
+        User recipient = userRepository.findByUsername(recipientName).orElse(null);
+        if (sender == null || recipient == null) {
+            return;
+        }
+
+        if (!followService.areFriends(sender, recipient)) {
+            return;
+        }
+
+        messagingTemplate.convertAndSendToUser(
+                recipient.getUsername(),
+                "/queue/typing",
+                new ChatTypingDTO(recipientName, sender.getUsername(), sender.getFullname())
+        );
     }
 }

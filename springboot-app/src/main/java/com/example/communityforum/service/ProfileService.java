@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class ProfileService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final FileStorageService fileStorageService;
+    private final StorageService fileStorageService;
     private final LikeRepository likeRepository;
     private final FollowRepository  followRepository;
     private final SecurityUtils securityUtils;
@@ -37,7 +37,7 @@ public class ProfileService {
     private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/jpg", "image/JPG" , "image/gif");
 
     public ProfileService(UserRepository userRepository, PostRepository postRepository,
-                          FileStorageService fileStorageService, LikeRepository likeRepository,
+                          StorageService fileStorageService, LikeRepository likeRepository,
                           FollowRepository followRepository,
                           SecurityUtils securityUtils) {
         this.userRepository = userRepository;

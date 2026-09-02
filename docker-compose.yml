@@ -29,6 +29,29 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
 
   backend:
     build: ./springboot-app
@@ -36,6 +59,8 @@ services:
       - ./springboot-app/.env
     environment:
       DB_URL: jdbc:mysql://db:3306/community_forum
+      FRONTEND_URL: http://localhost:3000
+      APP_BASE_URL: http://localhost:8080
       SPRING_RABBITMQ_HOST: localhost
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:8000
     ports:
@@ -59,3 +84,4 @@ services:
 volumes:
   db_data:
   uploads:
+  esdata:

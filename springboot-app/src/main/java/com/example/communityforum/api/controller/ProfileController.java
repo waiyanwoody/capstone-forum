@@ -12,8 +12,8 @@ import com.example.communityforum.exception.ResourceNotFoundException;
 import com.example.communityforum.persistence.entity.User;
 import com.example.communityforum.persistence.repository.UserRepository;
 import com.example.communityforum.security.SecurityUtils;
-import com.example.communityforum.service.FileStorageService;
 import com.example.communityforum.service.ProfileService;
+import com.example.communityforum.service.StorageService;
 import com.example.communityforum.service.UserService;
 import com.example.communityforum.service.VerificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +40,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final SecurityUtils securityUtils;
 
-    private final FileStorageService fileStorageService;
+    private final StorageService fileStorageService;
     private final ObjectMapper objectMapper;
 
     private final long MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB, can also come from app.properties

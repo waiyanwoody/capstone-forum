@@ -1,16 +1,18 @@
 package com.example.communityforum.persistence.entity;
 
+import com.example.communityforum.persistence.elasticsearch.PostDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 @Entity
@@ -91,4 +93,22 @@ public class Post {
     @Column(name = "embedding", columnDefinition = "BLOB")
     @JsonIgnore
     private byte[] embedding;
+    public static PostDocument toPostDocument(Post post) {
+    List<String> tagNames = post.getTags() != null
+        ? post.getTags().stream().map(Tag::getName).toList()
+        : Collections.emptyList();
+
+    return PostDocument.builder()
+        .id(post.getId())
+        .title(post.getTitle())
+        .content(post.getContent())
+        .slug(post.getSlug())
+        .authorUsername(post.getUser() != null ? post.getUser().getUsername() : null)
+        .tagNames(tagNames)
+        .pinned(post.isPinned())
+        .commentCount(post.getCommentCount())
+        .solved(post.isSolved())
+        .createdAt(post.getCreatedAt())
+        .build();
+}
 }

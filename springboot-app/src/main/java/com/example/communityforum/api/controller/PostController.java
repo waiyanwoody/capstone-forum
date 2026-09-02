@@ -13,6 +13,7 @@ import com.example.communityforum.persistence.repository.FollowRepository;
 import com.example.communityforum.persistence.repository.PostRepository;
 import com.example.communityforum.persistence.repository.UserRepository;
 import com.example.communityforum.service.PostService;
+import com.example.communityforum.service.SearchService;
 import com.example.communityforum.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -44,13 +45,15 @@ public class PostController {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final PostRepository postRepository;
+    private final SearchService searchService;
 
     public PostController(PostService postService, UserRepository userRepository,
-                          FollowRepository followRepository, PostRepository postRepository) {
+                          FollowRepository followRepository, PostRepository postRepository, SearchService searchService) {
         this.postService = postService;
         this.userRepository = userRepository;
         this.followRepository = followRepository;
         this.postRepository = postRepository;
+        this.searchService = searchService;
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -163,6 +166,25 @@ public class PostController {
     @PostMapping("/{id}/pinned")
     public ResponseEntity<PostDetailResponseDTO> togglePinned(@PathVariable Long id) {
         return ResponseEntity.ok(postService.togglePinned(id));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PageResponse<PostListResponseDTO>> searchPosts(
+            @RequestParam String keyword,
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        Page<PostListResponseDTO> postsPage = searchService.searchPosts(keyword, pageable);
+
+        PageResponse<PostListResponseDTO> response = PageResponse.<PostListResponseDTO>builder()
+                .content(postsPage.getContent())
+                .number(postsPage.getNumber())
+                .size(postsPage.getSize())
+                .totalElements(postsPage.getTotalElements())
+                .totalPages(postsPage.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
 }

@@ -4,11 +4,10 @@ import com.example.communityforum.dto.file.FileUploadRequestDTO;
 import com.example.communityforum.dto.file.FileUploadResponseDTO;
 import com.example.communityforum.dto.file.MultipleFileUploadRequest;
 import com.example.communityforum.exception.FileValidationException;
-import com.example.communityforum.service.FileStorageService;
+import com.example.communityforum.service.StorageService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -24,10 +23,9 @@ import java.util.List;
 @RequestMapping("/api/files")
 public class FileController {
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final StorageService fileStorageService;
 
-    public FileController(FileStorageService fileStorageService) {
+    public FileController(StorageService fileStorageService) {
         this.fileStorageService = fileStorageService;
     }
 

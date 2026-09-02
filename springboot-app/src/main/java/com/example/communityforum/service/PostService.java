@@ -10,6 +10,7 @@ import com.example.communityforum.exception.PermissionDeniedException;
 import com.example.communityforum.exception.ResourceNotFoundException;
 import com.example.communityforum.mapper.PostMapper;
 import com.example.communityforum.persistence.entity.Like;
+import com.example.communityforum.persistence.elasticsearch.PostDocument;
 import com.example.communityforum.persistence.entity.Post;
 import com.example.communityforum.persistence.entity.PostType;
 import com.example.communityforum.persistence.entity.SavedPost;
@@ -50,6 +51,7 @@ public class PostService {
     private final ApplicationEventPublisher publisher;
     private final EmbeddingService embeddingService;
     private final SavedPostRepository savedPostRepository;
+    private final SearchService searchService;
 
     public Page<PostListResponseDTO> getAllPosts(Pageable pageable, Boolean solved, Boolean pinned) {
         Page<Post> postPage;
@@ -186,6 +188,11 @@ public class PostService {
         // Broadcast new post to all connected clients
         PostListResponseDTO postDTO = postMapper.toListDTO(saved, currentUser, Map.of(), Map.of());
         publisher.publishEvent(new PostCreatedEvent(postDTO));
+
+
+        // 2. Sync to Elasticsearch (Secondary Read Store)
+        PostDocument doc = Post.toPostDocument(saved);
+        searchService.savePostDocument(doc);
 
         return postMapper.toDetailDTO(post, currentUser);
     }

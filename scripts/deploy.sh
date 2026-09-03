@@ -3,7 +3,7 @@ set -euo pipefail
 
 REGISTRY="${ECR_REGISTRY:-288761758164.dkr.ecr.ap-southeast-1.amazonaws.com}"
 TAG="${IMAGE_TAG:-latest}"
-NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://18.141.189.149:8080}"
+NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://community-forum.devfolio.uno:8080}"
 
 FRONTEND_IMAGE="${REGISTRY}/community-forum-frontend:${TAG}"
 BACKEND_IMAGE="${REGISTRY}/community-forum-backend:${TAG}"

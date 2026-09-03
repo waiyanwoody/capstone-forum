@@ -43,8 +43,8 @@ services:
       - ./springboot-app/.env
     environment:
       DB_URL: ${DB_URL:-jdbc:mysql://db:3306/community_forum}
-      FRONTEND_URL: ${FRONTEND_URL:-http://18.141.189.149:3000}
-      APP_BASE_URL: ${APP_BASE_URL:-http://18.141.189.149:8080}
+      FRONTEND_URL: ${FRONTEND_URL:-http://community-forum.devfolio.uno:3000}
+      APP_BASE_URL: ${APP_BASE_URL:-http://community-forum.devfolio.uno:8080}
       SPRING_RABBITMQ_HOST: ${SPRING_RABBITMQ_HOST:-localhost}
       ELASTICSEARCH_URIS: ${ELASTICSEARCH_URIS:-http://elasticsearch:9200}
       SPRING_PROFILES_ACTIVE: prod
@@ -60,7 +60,7 @@ services:
     image: ${FRONTEND_IMAGE:-288761758164.dkr.ecr.ap-southeast-1.amazonaws.com/community-forum-frontend:latest}
     environment:
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://18.141.189.149:8080}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://community-forum.devfolio.uno:8080}
     ports:
       - "3000:3000"
     depends_on:
